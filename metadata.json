@@ -1,0 +1,6 @@
+{
+  "name": "ManPowerLink - Temporary Manpower Marketplace",
+  "description": "Temporary manpower bidding & workforce platform connecting employers and temporary workers with an admin management panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
