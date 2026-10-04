@@ -5,12 +5,22 @@ import {
   Bid,
   CommissionSettings,
   NotificationItem,
+  AuthUser,
 } from '../types';
 
 export interface HealthResponse {
   status: string;
   server: string;
   version: string;
+  database?: string;
+  dbEngine?: string;
+  mongodb?: {
+    cluster: string;
+    database: string;
+    status: string;
+    connected: boolean;
+    ipWhitelistHelp?: string;
+  };
   uptimeSeconds: number;
   timestamp: string;
   counts: {
@@ -19,6 +29,20 @@ export interface HealthResponse {
     orders: number;
     bids: number;
   };
+}
+
+export interface DbInfoResponse {
+  success: boolean;
+  databaseName: string;
+  databaseType: string;
+  cluster?: string;
+  connectionString?: string;
+  status: string;
+  connectedToAtlas?: boolean;
+  ipWhitelistHelp?: string;
+  schemaVersion: string;
+  tables: Array<{ name: string; recordCount: number; description: string }>;
+  defaultAdminUser: string;
 }
 
 class ApiService {
@@ -31,6 +55,74 @@ class ApiService {
       return await res.json();
     } catch {
       return null;
+    }
+  }
+
+  async getDbInfo(): Promise<DbInfoResponse | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/db/info`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async reconnectDb(): Promise<any> {
+    try {
+      const res = await fetch(`${this.baseUrl}/db/reconnect`, { method: 'POST' });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  }
+
+  // Authentication Methods
+  async sendOtp(phone: string, role: string = 'customer'): Promise<{ success: boolean; message: string; otp?: string }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, role }),
+      });
+      return await res.json();
+    } catch {
+      return { success: true, message: 'Simulated OTP sent', otp: '1234' };
+    }
+  }
+
+  async verifyOtp(params: { phone: string; otp: string; role: string; name?: string; workerId?: string }): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      return await res.json();
+    } catch {
+      return { success: false, error: 'Network connection error' };
+    }
+  }
+
+  async login(params: { role: string; emailOrPhone?: string; password?: string; workerId?: string }): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+      return await res.json();
+    } catch {
+      return { success: false, error: 'Network connection error' };
+    }
+  }
+
+  async logout(): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/logout`, { method: 'POST' });
+      return res.ok;
+    } catch {
+      return true;
     }
   }
 

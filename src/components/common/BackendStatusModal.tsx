@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { api } from '../../services/api';
 
 interface BackendStatusModalProps {
   isOpen: boolean;
@@ -26,12 +27,18 @@ interface EndpointDef {
   method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   path: string;
   description: string;
-  category: 'System' | 'Categories' | 'Workers' | 'Orders' | 'Bidding' | 'Commission' | 'Stats';
+  category: 'System' | 'Auth' | 'Categories' | 'Workers' | 'Orders' | 'Bidding' | 'Commission' | 'Stats';
   samplePayload?: string;
 }
 
 const ENDPOINTS: EndpointDef[] = [
-  { method: 'GET', path: '/api/health', description: 'Server health, uptime, version & entity counts', category: 'System' },
+  { method: 'GET', path: '/api/health', description: 'Server health, uptime, MongoDB Atlas & entity counts', category: 'System' },
+  { method: 'GET', path: '/api/db/info', description: 'Database schema, MongoDB Atlas cluster & collections (manpowerlink_db)', category: 'System' },
+  { method: 'POST', path: '/api/db/reconnect', description: 'Test and trigger active connection to MongoDB Atlas cluster', category: 'System' },
+  { method: 'POST', path: '/api/auth/send-otp', description: 'Send simulated SMS OTP code (1234)', category: 'Auth', samplePayload: '{\n  "phone": "+91 98450 11223",\n  "role": "customer"\n}' },
+  { method: 'POST', path: '/api/auth/verify-otp', description: 'Verify OTP code and issue session token', category: 'Auth', samplePayload: '{\n  "phone": "+91 98450 11223",\n  "otp": "1234",\n  "role": "customer",\n  "name": "Kiran Transport & Co."\n}' },
+  { method: 'POST', path: '/api/auth/login', description: 'Authenticate admin, customer, or worker session', category: 'Auth', samplePayload: '{\n  "role": "admin",\n  "emailOrPhone": "admin@manpowerlink.com",\n  "password": "admin123"\n}' },
+  { method: 'POST', path: '/api/auth/logout', description: 'Terminate active session token', category: 'Auth' },
   { method: 'GET', path: '/api/stats', description: 'Aggregated marketplace analytics & volume', category: 'Stats' },
   { method: 'GET', path: '/api/categories', description: 'Fetch all service categories with active status', category: 'Categories' },
   { method: 'POST', path: '/api/categories', description: 'Add new category with hourly base rate', category: 'Categories', samplePayload: '{\n  "name": "Carpentry & Repairs",\n  "icon": "Hammer",\n  "description": "Furniture assembly & fixes",\n  "baseRatePerHour": 320\n}' },
@@ -54,6 +61,7 @@ export const BackendStatusModal: React.FC<BackendStatusModalProps> = ({ isOpen, 
   const [selectedEndpoint, setSelectedEndpoint] = useState<EndpointDef>(ENDPOINTS[0]);
   const [apiResponse, setApiResponse] = useState<string | null>(null);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
+  const [isReconnectingMongo, setIsReconnectingMongo] = useState(false);
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -160,9 +168,48 @@ export const BackendStatusModal: React.FC<BackendStatusModalProps> = ({ isOpen, 
             )}
           </div>
 
-          <div className="flex items-center space-x-2 text-[11px] text-slate-400">
+          <div className="flex items-center space-x-2 text-[11px] text-slate-300 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700">
             <Database className="w-3.5 h-3.5 text-cyan-400" />
-            <span>In-Memory Storage &bull; Instant State Synchronization</span>
+            <span>DB: <strong className="text-white font-mono">manpowerlink_db</strong></span>
+            <span className="px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 text-[10px] font-mono border border-emerald-700/50">
+              MongoDB Atlas
+            </span>
+          </div>
+        </div>
+
+        {/* MongoDB Atlas Integration Status Banner */}
+        <div className="bg-slate-900/90 border-b border-slate-800 px-6 py-2.5 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center space-x-2">
+            <span className={`w-2 h-2 rounded-full ${backendHealth?.mongodb?.connected ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
+            <span className="font-semibold text-white">MongoDB Atlas Cluster:</span>
+            <span className="font-mono text-cyan-300 text-[11px]">cluster0.dzxw5pm.mongodb.net</span>
+            <span className="text-slate-400 text-[11px]">&bull;</span>
+            <span className="text-slate-300 text-[11px]">DB: <strong className="text-white">manpowerlink_db</strong></span>
+            {backendHealth?.mongodb?.connected ? (
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                Connected
+              </span>
+            ) : (
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                Atlas Whitelist Required (0.0.0.0/0)
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={async () => {
+                setIsReconnectingMongo(true);
+                await api.reconnectDb();
+                await refreshBackend();
+                setIsReconnectingMongo(false);
+              }}
+              disabled={isReconnectingMongo}
+              className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow-xs flex items-center space-x-1"
+            >
+              <RefreshCw className={`w-3 h-3 ${isReconnectingMongo ? 'animate-spin' : ''}`} />
+              <span>{isReconnectingMongo ? 'Testing...' : 'Test Atlas Connection'}</span>
+            </button>
           </div>
         </div>
 

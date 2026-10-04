@@ -38,10 +38,26 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = ({
     notifications,
     dismissNotification,
     backendConnected,
+    adminAuth,
+    customerAuth,
+    employeeAuth,
+    signOut,
+    loginAdmin,
+    loginCustomer,
+    loginEmployee,
   } = useApp();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const activeWorker = workers.find((w) => w.id === activeWorkerId) || workers[0];
+
+  const currentAuthUser =
+    currentRole === 'admin'
+      ? adminAuth
+      : currentRole === 'customer'
+      ? customerAuth
+      : currentRole === 'employee'
+      ? employeeAuth
+      : null;
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
@@ -182,6 +198,35 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = ({
             >
               <RefreshCw className="w-4 h-4" />
             </button>
+
+            {/* Signed In User Status Badge */}
+            {currentRole !== 'split' && (
+              <div className="hidden lg:flex items-center space-x-1 pl-1 border-l border-slate-200">
+                {currentAuthUser ? (
+                  <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="font-semibold text-slate-700 truncate max-w-[120px]">
+                      {currentAuthUser.name.split(' ')[0]}
+                    </span>
+                    <button
+                      onClick={() => signOut(currentRole as 'admin' | 'customer' | 'employee')}
+                      className="text-slate-400 hover:text-rose-600 transition ml-1"
+                      title={`Sign Out from ${currentRole} app`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold"
+                    title="Sign-in is compulsory before accessing this application"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Login Compulsory</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Notification Bell */}
             <div className="relative">

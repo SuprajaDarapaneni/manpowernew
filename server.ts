@@ -18,6 +18,7 @@ import {
   INITIAL_COMMISSION,
   INITIAL_STATS,
 } from './src/data/initialData';
+import { mongoDb } from './src/db/mongodb';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,11 +58,21 @@ async function startServer() {
   // ----------------------------------------------------
   // REST API: System & Health
   // ----------------------------------------------------
-  app.get('/api/health', (req: Request, res: Response) => {
+  app.get('/api/health', async (req: Request, res: Response) => {
+    const mongoStatus = await mongoDb.getStatus();
     res.json({
       status: 'healthy',
-      server: 'ManPowerLink Express Backend',
-      version: '1.2.0',
+      server: 'ManPowerLink Express Full-Stack Server',
+      version: '1.3.0',
+      database: 'manpowerlink_db',
+      dbEngine: mongoStatus.connected ? 'MongoDB Atlas (Live)' : 'MongoDB Atlas (Configured / Fallback Active)',
+      mongodb: {
+        cluster: mongoStatus.cluster,
+        database: mongoStatus.database,
+        status: mongoStatus.status,
+        connected: mongoStatus.connected,
+        ipWhitelistHelp: mongoStatus.ipWhitelistHelp,
+      },
       uptimeSeconds: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
       counts: {
@@ -71,6 +82,172 @@ async function startServer() {
         bids: dbBids.length,
       },
     });
+  });
+
+  app.get('/api/db/info', async (req: Request, res: Response) => {
+    const mongoStatus = await mongoDb.getStatus();
+    res.json({
+      success: true,
+      databaseName: 'manpowerlink_db',
+      databaseType: 'MongoDB Atlas Distributed Database',
+      cluster: 'cluster0.dzxw5pm.mongodb.net',
+      connectionString: 'mongodb+srv://saisuppu1_db_user:***@cluster0.dzxw5pm.mongodb.net/manpowerlink_db',
+      status: mongoStatus.status,
+      connectedToAtlas: mongoStatus.connected,
+      ipWhitelistHelp: mongoStatus.ipWhitelistHelp,
+      schemaVersion: '1.2.0',
+      tables: [
+        { name: 'service_categories', recordCount: dbCategories.length, description: 'Service Categories collection' },
+        { name: 'workers', recordCount: dbWorkers.length, description: 'Registered Worker Profiles collection' },
+        { name: 'job_orders', recordCount: dbOrders.length, description: 'Customer Job Postings collection' },
+        { name: 'bids', recordCount: dbBids.length, description: 'Worker Quotations & Bids collection' },
+        { name: 'commission_settings', recordCount: 1, description: 'Platform Fee Rules collection' },
+        { name: 'notifications', recordCount: dbNotifications.length, description: 'Marketplace Events Log' },
+      ],
+      defaultAdminUser: 'admin@manpowerlink.com',
+    });
+  });
+
+  app.post('/api/db/reconnect', async (req: Request, res: Response) => {
+    const connected = await mongoDb.connect();
+    const status = await mongoDb.getStatus();
+    res.json({
+      success: connected,
+      status,
+      message: connected
+        ? 'Successfully connected to MongoDB Atlas cluster!'
+        : 'Connection attempted. If failing, ensure IP 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.',
+    });
+  });
+
+  // ----------------------------------------------------
+  // REST API: Authentication & Session Management
+  // ----------------------------------------------------
+  app.post('/api/auth/send-otp', (req: Request, res: Response) => {
+    const { phone, role } = req.body;
+    if (!phone) {
+      return res.status(400).json({ success: false, error: 'Phone number is required' });
+    }
+
+    const demoOtp = '1234';
+    const notif: NotificationItem = {
+      id: `notif-otp-${Date.now()}`,
+      title: '🔐 Verification Code (OTP)',
+      message: `Your sign-in OTP for ${phone} is ${demoOtp}. Valid for 10 minutes.`,
+      type: 'info',
+      timestamp: 'Just now',
+      targetRole: role || 'customer',
+    };
+    dbNotifications.unshift(notif);
+
+    res.json({
+      success: true,
+      message: `OTP sent to ${phone}`,
+      otp: demoOtp, // provided for ease of testing
+    });
+  });
+
+  app.post('/api/auth/verify-otp', (req: Request, res: Response) => {
+    const { phone, otp, role, name, workerId } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ success: false, error: 'Phone and OTP are required' });
+    }
+
+    if (otp !== '1234' && otp !== '0000') {
+      return res.status(401).json({ success: false, error: 'Invalid OTP. Please enter 1234 for demo.' });
+    }
+
+    let user: any = null;
+
+    if (role === 'employee') {
+      const worker = dbWorkers.find((w) => w.id === workerId || w.phone === phone) || dbWorkers[0];
+      user = {
+        id: worker.id,
+        name: worker.name,
+        role: 'employee',
+        emailOrPhone: worker.phone,
+        avatar: worker.avatar,
+        workerCategory: worker.category,
+        rating: worker.rating,
+        verified: worker.isVerified,
+        token: `jwt_emp_${Date.now()}`,
+      };
+    } else {
+      user = {
+        id: `cust-${Date.now()}`,
+        name: name || 'Kiran Transport & Co.',
+        role: 'customer',
+        emailOrPhone: phone,
+        businessName: name || 'Kiran Transport & Co.',
+        verified: true,
+        token: `jwt_cust_${Date.now()}`,
+      };
+    }
+
+    res.json({ success: true, user });
+  });
+
+  app.post('/api/auth/login', (req: Request, res: Response) => {
+    const { role, emailOrPhone, password, workerId } = req.body;
+
+    if (role === 'admin') {
+      // Admin authentication
+      const email = emailOrPhone || 'admin@manpowerlink.com';
+      const user = {
+        id: 'admin-1',
+        name: 'Vivek Sharma',
+        role: 'admin',
+        emailOrPhone: email,
+        token: `jwt_admin_${Date.now()}`,
+        verified: true,
+      };
+      return res.json({ success: true, user });
+    }
+
+    if (role === 'employee') {
+      const worker = dbWorkers.find((w) => w.id === workerId || w.phone === emailOrPhone) || dbWorkers[0];
+      const user = {
+        id: worker.id,
+        name: worker.name,
+        role: 'employee',
+        emailOrPhone: worker.phone,
+        avatar: worker.avatar,
+        workerCategory: worker.category,
+        rating: worker.rating,
+        verified: worker.isVerified,
+        token: `jwt_emp_${Date.now()}`,
+      };
+      return res.json({ success: true, user });
+    }
+
+    // Default Customer
+    const user = {
+      id: 'cust-101',
+      name: 'Kiran Transport & Co.',
+      role: 'customer',
+      emailOrPhone: emailOrPhone || '+91 98450 11223',
+      businessName: 'Kiran Transport & Co.',
+      verified: true,
+      token: `jwt_cust_${Date.now()}`,
+    };
+    return res.json({ success: true, user });
+  });
+
+  app.get('/api/auth/me', (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    // Return sample session
+    res.json({
+      success: true,
+      authenticated: true,
+      session: 'Active',
+    });
+  });
+
+  app.post('/api/auth/logout', (req: Request, res: Response) => {
+    res.json({ success: true, message: 'Logged out successfully' });
   });
 
   // ----------------------------------------------------

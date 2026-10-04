@@ -69,6 +69,9 @@ The application includes a completed, production-ready Express.js backend (`/ser
 ### Server Runtime Architecture
 - **Entry Point**: `/server.ts`
 - **Port**: `3000` (Universal for Dev & Prod)
+- **Database Name**: `manpowerlink_db`
+- **Database Engine**: In-Memory Relational Datastore with JSON persistence
+- **Schema & Tables**: `categories`, `workers`, `job_orders`, `bids`, `commission_settings`, `notifications`
 - **Middleware**: JSON body parser, CORS headers, Vite middleware mode in dev, static dist assets in production.
 - **Client Service**: `/src/services/api.ts` with optimistic UI updates & live synchronization.
 
@@ -77,6 +80,7 @@ The application includes a completed, production-ready Express.js backend (`/ser
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/health` | Healthcheck, uptime, version, and entity counts |
+| `GET` | `/api/db/info` | Database name (`manpowerlink_db`), tables, and schema info |
 | `GET` | `/api/stats` | Platform aggregates (revenue, orders, workers, bids) |
 | `GET` | `/api/categories` | List all service categories |
 | `POST` | `/api/categories` | Add a new service category |
@@ -97,4 +101,64 @@ The application includes a completed, production-ready Express.js backend (`/ser
 | `DELETE` | `/api/notifications/:id` | Dismiss a notification |
 | `POST` | `/api/simulate-bid` | Simulate incoming live worker bids |
 | `POST` | `/api/reset` | Restore platform data to initial state |
+
+---
+
+## 5. Compulsory Authentication & Database Architecture
+
+### Compulsory Sign In (No Auto Sign-In)
+- **Compulsory Access Guard**: Users are **never automatically signed in**. Every user MUST explicitly sign in before viewing the Admin Dashboard, Employer App, or Worker App.
+- **Access Gates**:
+  - `AdminLayout`: Renders `<AdminLoginView />` until authenticated via `/api/auth/login`.
+  - `CustomerApp`: Renders `<CustomerLoginView />` until authenticated via `/api/auth/verify-otp`.
+  - `EmployeeApp`: Renders `<EmployeeLoginView />` until authenticated via `/api/auth/verify-otp`.
+- **Sign Out**: Each app contains an explicit "Sign Out" button to terminate the session and immediately return to the compulsory login screen.
+
+### Database Architecture & MongoDB Atlas Integration
+- **Database Name**: `manpowerlink_db`
+- **Database Engine**: **MongoDB Atlas (Distributed Cloud DB)** with resilient in-memory failover mirror
+- **Atlas Cluster**: `cluster0.dzxw5pm.mongodb.net`
+- **Connection URI Format**: `mongodb+srv://<user>:<password>@cluster0.dzxw5pm.mongodb.net/manpowerlink_db?retryWrites=true&w=majority`
+- **Driver**: Official `mongodb` Node.js client (`^6.12.0`)
+- **Status & Inspection Endpoints**:
+  - `GET /api/health`: Exposes live MongoDB Atlas connection status, cluster, and entity counts
+  - `GET /api/db/info`: Exposes database name, cluster host, and collection document counts
+  - `POST /api/db/reconnect`: Allows on-demand cluster ping and reconnection
+- **Atlas Collections**:
+  1. `service_categories`: Service trades, hourly base rates, icons, and status flags
+  2. `workers`: Verified worker profiles, ratings, wallet balances, and trade categories
+  3. `job_orders`: Employer job postings, required headcount, and negotiated pricing
+  4. `bids`: Worker quote submissions and arrival times
+  5. `commission_settings`: Platform fee rules (percentage & fixed amount)
+  6. `notifications`: Event and transaction activity logs
+  7. `users`: Administrator and role credentials
+- **Network Access Whitelist Note**: For direct cloud access from Google Cloud Run/AI Studio runtime to your Atlas cluster, ensure `0.0.0.0/0` is added in your MongoDB Atlas Dashboard under **Security > Network Access > IP Access List**.
+
+### Multi-App Authentication Breakdown
+
+1. **Admin Web Panel (`/src/components/auth/AdminLoginView.tsx`)**:
+   - Role-Based Access Control (RBAC) Superuser authentication.
+   - Credentials: `admin@manpowerlink.com` / `admin123`.
+   - 1-Click Fast Sign-In, 256-bit encrypted session emulation, remember-me support.
+   - Profile badge and sign-out controls in sidebar.
+
+2. **Customer / Employer App (`/src/components/auth/CustomerLoginView.tsx`)**:
+   - Mobile Phone + OTP verification flow (Default OTP: `1234`).
+   - Employer Profile Switcher:
+     - Kiran Transport & Co. (+91 98450 11223)
+     - Apex Warehousing Ltd (+91 98450 44556)
+     - Skyline Events & Catering (+91 98450 77889)
+   - Profile management and sign-out in mobile navigation.
+
+3. **Employee / Worker App (`/src/components/auth/EmployeeLoginView.tsx`)**:
+   - Worker phone / Aadhaar ID sign in with OTP verification (Default OTP: `1234`).
+   - Direct Worker Card switcher (Ramesh Gowda, Suresh Kumar, Manjunath K, Venkatesh P).
+   - Identity verification badge & bank payout security.
+   - Sign-out and worker account switching in Earnings tab.
+
+### LocalStorage Persistence (Explicit Logins Only)
+- `manpower_admin_auth`: Stored only upon explicit user sign-in.
+- `manpower_customer_auth`: Stored only upon explicit user sign-in.
+- `manpower_employee_auth`: Stored only upon explicit user sign-in.
+
 

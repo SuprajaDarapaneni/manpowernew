@@ -15,12 +15,25 @@ import { EmployeeDashboard } from './EmployeeDashboard';
 import { JobDetailsBidding } from './JobDetailsBidding';
 import { AvailableJobsView } from './AvailableJobsView';
 import { EmployeeBidsView } from './EmployeeBidsView';
+import { EmployeeLoginView } from '../auth/EmployeeLoginView';
+import { LogOut, ArrowRightLeft } from 'lucide-react';
 
 export const EmployeeApp: React.FC = () => {
-  const { employeeScreen, setEmployeeScreen, workers, activeWorkerId, bids } = useApp();
+  const { employeeScreen, setEmployeeScreen, workers, activeWorkerId, bids, employeeAuth, signOut, switchWorkerAccount } = useApp();
 
   const worker = workers.find((w) => w.id === activeWorkerId) || workers[0];
   const pendingBidsCount = bids.filter((b) => b.workerId === worker.id && b.status === 'pending').length;
+
+  if (!employeeAuth) {
+    return (
+      <PhoneFrame
+        title="Employee / Worker App"
+        roleBadge={{ label: 'Worker Login Required', color: 'bg-amber-100 text-amber-800' }}
+      >
+        <EmployeeLoginView />
+      </PhoneFrame>
+    );
+  }
 
   return (
     <PhoneFrame
@@ -73,12 +86,22 @@ export const EmployeeApp: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() => alert(`Initiating bank payout of ₹${worker.walletBalance} to Bank Account ending in 9812...`)}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition"
-              >
-                Request Bank Transfer
-              </button>
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => alert(`Initiating bank payout of ₹${worker.walletBalance} to Bank Account ending in 9812...`)}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition"
+                >
+                  Request Bank Transfer
+                </button>
+
+                <button
+                  onClick={() => signOut('employee')}
+                  className="w-full py-2 px-3 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded-xl font-bold text-xs transition flex items-center justify-center space-x-1.5 border border-slate-200"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out from Worker Portal</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

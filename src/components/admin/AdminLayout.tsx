@@ -19,10 +19,17 @@ import { CommissionSetupView } from './CommissionSetupView';
 import { WorkersManagementView } from './WorkersManagementView';
 import { OrdersPaymentsView } from './OrdersPaymentsView';
 import { ReportsView } from './ReportsView';
+import { AdminLoginView } from '../auth/AdminLoginView';
 import { AdminTab } from '../../types';
+import { LogOut, User, Database, CheckCircle2 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
-  const { adminTab, setAdminTab, stats } = useApp();
+  const { adminTab, setAdminTab, stats, adminAuth, loginAdmin, signOut } = useApp();
+
+  // If not signed in, show Admin Login view
+  if (!adminAuth) {
+    return <AdminLoginView />;
+  }
 
   const navItems: { id: AdminTab; label: string; icon: React.ElementType; badge?: string }[] = [
     { id: 'dashboard', label: '1. Dashboard', icon: LayoutDashboard },
@@ -83,8 +90,30 @@ export const AdminLayout: React.FC = () => {
           })}
         </nav>
 
+        {/* Logged in Admin Profile & Sign Out */}
+        <div className="p-3 mx-3 mb-2 bg-slate-800/80 rounded-xl border border-slate-700/80 text-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white text-xs">
+                {adminAuth?.name.charAt(0) || 'A'}
+              </div>
+              <div className="truncate">
+                <div className="font-bold text-white text-xs truncate">{adminAuth?.name}</div>
+                <div className="text-[10px] text-emerald-400">Superuser &bull; Active</div>
+              </div>
+            </div>
+            <button
+              onClick={() => signOut('admin')}
+              className="p-1.5 rounded-lg bg-slate-700/60 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition"
+              title="Sign Out from Admin Panel"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
         {/* Platform Health & Summary Footer */}
-        <div className="p-4 m-3 bg-slate-800/60 rounded-xl border border-slate-800 text-xs">
+        <div className="p-4 m-3 bg-slate-800/60 rounded-xl border border-slate-800 text-xs space-y-2">
           <div className="flex items-center justify-between text-slate-400">
             <span>Platform Status:</span>
             <span className="flex items-center gap-1 text-emerald-400 font-semibold">
@@ -92,7 +121,21 @@ export const AdminLayout: React.FC = () => {
               Operational
             </span>
           </div>
-          <div className="mt-2 pt-2 border-t border-slate-700/60 flex justify-between text-[11px] text-slate-400">
+          <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+            <span className="text-slate-400 flex items-center gap-1">
+              <Database className="w-3 h-3 text-cyan-400" />
+              <span>MongoDB Atlas:</span>
+            </span>
+            <span className="font-mono text-cyan-300 font-bold">manpowerlink_db</span>
+          </div>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400">Admin Session:</span>
+            <span className="text-emerald-300 font-semibold flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              Kept Signed In
+            </span>
+          </div>
+          <div className="pt-1 border-t border-slate-700/40 flex justify-between text-[10px] text-slate-500">
             <span>Hub: Mangalore, KA</span>
             <span>v2.4 Active</span>
           </div>

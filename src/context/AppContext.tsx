@@ -10,6 +10,7 @@ import {
   Bid,
   CommissionSettings,
   NotificationItem,
+  AuthUser,
 } from '../types';
 import {
   INITIAL_CATEGORIES,
@@ -20,6 +21,37 @@ import {
   INITIAL_STATS,
 } from '../data/initialData';
 import { api, HealthResponse } from '../services/api';
+
+const DEFAULT_ADMIN: AuthUser = {
+  id: 'admin-1',
+  name: 'Vivek Sharma',
+  role: 'admin',
+  emailOrPhone: 'admin@manpowerlink.com',
+  token: 'jwt_admin_demo',
+  verified: true,
+};
+
+const DEFAULT_CUSTOMER: AuthUser = {
+  id: 'cust-101',
+  name: 'Kiran Transport & Co.',
+  role: 'customer',
+  emailOrPhone: '+91 98450 11223',
+  businessName: 'Kiran Transport & Co.',
+  token: 'jwt_cust_demo',
+  verified: true,
+};
+
+const DEFAULT_EMPLOYEE: AuthUser = {
+  id: 'w-ramesh',
+  name: 'Ramesh Gowda',
+  role: 'employee',
+  emailOrPhone: '+91 98765 43210',
+  avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+  workerCategory: 'Loading & Unloading',
+  rating: 4.8,
+  verified: true,
+  token: 'jwt_emp_demo',
+};
 
 interface AppContextType {
   // Navigation & Role View
@@ -39,6 +71,16 @@ interface AppContextType {
   setSelectedJobId: (id: string) => void;
   activeWorkerId: string;
   setActiveWorkerId: (id: string) => void;
+
+  // Authentication State
+  adminAuth: AuthUser | null;
+  customerAuth: AuthUser | null;
+  employeeAuth: AuthUser | null;
+  loginAdmin: (email?: string, password?: string) => Promise<boolean>;
+  loginCustomer: (phone: string, otp: string, name?: string) => Promise<boolean>;
+  loginEmployee: (workerIdOrPhone: string, otp: string) => Promise<boolean>;
+  signOut: (role: 'admin' | 'customer' | 'employee') => Promise<void>;
+  switchWorkerAccount: (workerId: string) => void;
 
   // State
   categories: ServiceCategory[];
@@ -79,8 +121,149 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [employeeScreen, setEmployeeScreen] = useState<EmployeeScreen>('dashboard');
   const [usePhoneFrame, setUsePhoneFrame] = useState<boolean>(true);
 
+  // Authentication states - Compulsory login: starts as null so users MUST sign in before seeing apps/dashboard
+  const [adminAuth, setAdminAuth] = useState<AuthUser | null>(() => {
+    try {
+      // Invalidate any legacy auto-signed-in dummy tokens from prior sessions
+      const autoCleaned = sessionStorage.getItem('manpower_cleaned_autologin_v4');
+      if (!autoCleaned) {
+        localStorage.removeItem('manpower_admin_auth');
+        localStorage.removeItem('manpower_customer_auth');
+        localStorage.removeItem('manpower_employee_auth');
+        sessionStorage.setItem('manpower_cleaned_autologin_v4', 'true');
+        return null;
+      }
+      const stored = localStorage.getItem('manpower_admin_auth');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [customerAuth, setCustomerAuth] = useState<AuthUser | null>(() => {
+    try {
+      const stored = localStorage.getItem('manpower_customer_auth');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [employeeAuth, setEmployeeAuth] = useState<AuthUser | null>(() => {
+    try {
+      const stored = localStorage.getItem('manpower_employee_auth');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [selectedJobId, setSelectedJobId] = useState<string>('job-1045');
-  const [activeWorkerId, setActiveWorkerId] = useState<string>('w-ramesh');
+  const [activeWorkerId, setActiveWorkerId] = useState<string>(() => {
+    return employeeAuth?.id || 'w-ramesh';
+  });
+
+  const loginAdmin = async (email = 'admin@manpowerlink.com', password = ''): Promise<boolean> => {
+    const res = await api.login({ role: 'admin', emailOrPhone: email, password });
+    if (res.success && res.user) {
+      setAdminAuth(res.user);
+      localStorage.setItem('manpower_admin_auth', JSON.stringify(res.user));
+      addNotification('Admin Signed In', `Welcome back, ${res.user.name}`, 'success', 'admin');
+      return true;
+    }
+    // Fallback local login
+    const user = { ...DEFAULT_ADMIN, emailOrPhone: email };
+    setAdminAuth(user);
+    localStorage.setItem('manpower_admin_auth', JSON.stringify(user));
+    return true;
+  };
+
+  const loginCustomer = async (phone: string, otp: string, name?: string): Promise<boolean> => {
+    const res = await api.verifyOtp({ phone, otp, role: 'customer', name });
+    if (res.success && res.user) {
+      setCustomerAuth(res.user);
+      localStorage.setItem('manpower_customer_auth', JSON.stringify(res.user));
+      addNotification('Customer Signed In', `Welcome, ${res.user.name}`, 'success', 'customer');
+      return true;
+    }
+    // Fallback demo login
+    const user: AuthUser = {
+      id: `cust-${Date.now()}`,
+      name: name || 'Kiran Transport & Co.',
+      role: 'customer',
+      emailOrPhone: phone,
+      businessName: name || 'Kiran Transport & Co.',
+      verified: true,
+      token: `jwt_cust_${Date.now()}`,
+    };
+    setCustomerAuth(user);
+    localStorage.setItem('manpower_customer_auth', JSON.stringify(user));
+    return true;
+  };
+
+  const loginEmployee = async (workerIdOrPhone: string, otp: string): Promise<boolean> => {
+    const matchedWorker = workers.find((w) => w.id === workerIdOrPhone || w.phone === workerIdOrPhone) || workers[0];
+    const res = await api.verifyOtp({ phone: matchedWorker.phone, otp, role: 'employee', workerId: matchedWorker.id });
+    if (res.success && res.user) {
+      setEmployeeAuth(res.user);
+      setActiveWorkerId(res.user.id);
+      localStorage.setItem('manpower_employee_auth', JSON.stringify(res.user));
+      addNotification('Worker Signed In', `Welcome, ${res.user.name}`, 'success', 'employee');
+      return true;
+    }
+    const user: AuthUser = {
+      id: matchedWorker.id,
+      name: matchedWorker.name,
+      role: 'employee',
+      emailOrPhone: matchedWorker.phone,
+      avatar: matchedWorker.avatar,
+      workerCategory: matchedWorker.category,
+      rating: matchedWorker.rating,
+      verified: matchedWorker.isVerified,
+      token: `jwt_emp_${Date.now()}`,
+    };
+    setEmployeeAuth(user);
+    setActiveWorkerId(matchedWorker.id);
+    localStorage.setItem('manpower_employee_auth', JSON.stringify(user));
+    return true;
+  };
+
+  const signOut = async (role: 'admin' | 'customer' | 'employee'): Promise<void> => {
+    if (role === 'admin') {
+      setAdminAuth(null);
+      localStorage.removeItem('manpower_admin_auth');
+      addNotification('Admin Signed Out', 'You have been signed out from the Admin Console', 'info', 'admin');
+    } else if (role === 'customer') {
+      setCustomerAuth(null);
+      localStorage.removeItem('manpower_customer_auth');
+      addNotification('Signed Out', 'You have been signed out of Employer App', 'info', 'customer');
+    } else if (role === 'employee') {
+      setEmployeeAuth(null);
+      localStorage.removeItem('manpower_employee_auth');
+      addNotification('Signed Out', 'Worker profile logged out', 'info', 'employee');
+    }
+    await api.logout();
+  };
+
+  const switchWorkerAccount = (workerId: string) => {
+    const target = workers.find((w) => w.id === workerId);
+    if (!target) return;
+    const user: AuthUser = {
+      id: target.id,
+      name: target.name,
+      role: 'employee',
+      emailOrPhone: target.phone,
+      avatar: target.avatar,
+      workerCategory: target.category,
+      rating: target.rating,
+      verified: target.isVerified,
+      token: `jwt_emp_${Date.now()}`,
+    };
+    setEmployeeAuth(user);
+    setActiveWorkerId(target.id);
+    localStorage.setItem('manpower_employee_auth', JSON.stringify(user));
+    addNotification('Switched Worker Profile', `Now operating as ${target.name} (${target.category})`, 'info', 'employee');
+  };
 
   const [categories, setCategories] = useState<ServiceCategory[]>(INITIAL_CATEGORIES);
   const [workers, setWorkers] = useState<Worker[]>(INITIAL_WORKERS);
@@ -423,6 +606,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         commission,
         stats,
         notifications,
+        adminAuth,
+        customerAuth,
+        employeeAuth,
+        loginAdmin,
+        loginCustomer,
+        loginEmployee,
+        signOut,
+        switchWorkerAccount,
         backendConnected,
         backendHealth,
         syncingWithBackend,

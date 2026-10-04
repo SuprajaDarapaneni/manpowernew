@@ -24,6 +24,14 @@ export const AdminDashboard: React.FC = () => {
       {/* Top Welcome & Quick Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
+          <div className="flex items-center space-x-2 mb-1">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Admin Session: Always Kept Signed In
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-100 text-cyan-800 border border-cyan-200 font-mono">
+              DB: manpowerlink_db
+            </span>
+          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Overview Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">
             Real-time manpower supply, bidding activity, order fulfillment & platform commission

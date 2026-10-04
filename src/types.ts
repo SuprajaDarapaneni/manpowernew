@@ -106,3 +106,17 @@ export interface NotificationItem {
   timestamp: string;
   targetRole?: AppViewRole;
 }
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  role: 'admin' | 'customer' | 'employee';
+  emailOrPhone: string;
+  avatar?: string;
+  token: string;
+  businessName?: string;
+  workerCategory?: string;
+  rating?: number;
+  verified: boolean;
+}
+
