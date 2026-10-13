@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Layers,
   Users,
@@ -10,11 +10,21 @@ import {
   CheckCircle2,
   Calendar,
   Zap,
+  Smartphone,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { PlayConsoleHubModal } from '../legal/PlayConsoleHubModal';
+import { PrivacyPolicyModal } from '../legal/PrivacyPolicyModal';
+import { TermsOfServiceModal } from '../legal/TermsOfServiceModal';
+import { AccountDeletionModal } from '../legal/AccountDeletionModal';
 
 export const AdminDashboard: React.FC = () => {
-  const { categories, workers, orders, bids, stats, setAdminTab, setSelectedJobId, setCustomerScreen } = useApp();
+  const { categories, workers, orders, bids, stats, setAdminTab, setSelectedJobId } = useApp();
+
+  const [showPlayConsole, setShowPlayConsole] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showDeletion, setShowDeletion] = useState(false);
 
   const activeOrdersCount = orders.filter((o) => o.status !== 'completed' && o.status !== 'cancelled').length;
   const activeWorkersCount = workers.filter((w) => w.isAvailable).length;
@@ -24,30 +34,30 @@ export const AdminDashboard: React.FC = () => {
       {/* Top Welcome & Quick Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
-          <div className="flex items-center space-x-2 mb-1">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-              Admin Session: Always Kept Signed In
-            </span>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-100 text-cyan-800 border border-cyan-200 font-mono">
-              DB: manpowerlink_db
-            </span>
-          </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Overview Dashboard</h1>
           <p className="text-sm text-slate-500 mt-1">
             Real-time manpower supply, bidding activity, order fulfillment & platform commission
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setShowPlayConsole(true)}
+            className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-800 border border-red-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+            title="Google Play Console Readiness, Package & Data Safety Metadata"
+          >
+            <Smartphone className="w-4 h-4 text-red-600" />
+            <span>Play Store Ready</span>
+          </button>
           <button
             onClick={() => setAdminTab('orders')}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center gap-1.5"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5"
           >
-            <Briefcase className="w-4 h-4" />
+            <Briefcase className="w-4 h-4 text-yellow-300" />
             <span>Manage Orders</span>
           </button>
           <button
             onClick={() => setAdminTab('categories')}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition flex items-center gap-1.5"
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5"
           >
             <Layers className="w-4 h-4" />
             <span>Categories</span>
@@ -60,17 +70,17 @@ export const AdminDashboard: React.FC = () => {
         {/* Total Categories */}
         <div
           onClick={() => setAdminTab('categories')}
-          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 cursor-pointer transition"
+          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-red-300 cursor-pointer transition"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categories</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
               <Layers className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-extrabold text-slate-900">{categories.length}</span>
-            <span className="text-xs text-emerald-600 font-medium flex items-center">
+            <span className="text-xs text-red-600 font-bold flex items-center">
               {categories.filter((c) => c.active).length} Active
             </span>
           </div>
@@ -80,17 +90,17 @@ export const AdminDashboard: React.FC = () => {
         {/* Total Workers */}
         <div
           onClick={() => setAdminTab('workers')}
-          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-teal-300 cursor-pointer transition"
+          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-yellow-400 cursor-pointer transition"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Workers</span>
-            <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-yellow-100 text-yellow-800 flex items-center justify-center">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-extrabold text-slate-900">{stats.totalWorkers}</span>
-            <span className="text-xs text-teal-600 font-medium">
+            <span className="text-xs text-yellow-700 font-bold">
               {activeWorkersCount} Online
             </span>
           </div>
@@ -100,17 +110,17 @@ export const AdminDashboard: React.FC = () => {
         {/* Active Orders */}
         <div
           onClick={() => setAdminTab('orders')}
-          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-blue-300 cursor-pointer transition"
+          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-red-300 cursor-pointer transition"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Orders</span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-extrabold text-slate-900">{activeOrdersCount}</span>
-            <span className="text-xs text-blue-600 font-medium flex items-center">
+            <span className="text-xs text-red-600 font-bold flex items-center">
               In Progress
             </span>
           </div>
@@ -120,17 +130,17 @@ export const AdminDashboard: React.FC = () => {
         {/* Total Bids */}
         <div
           onClick={() => setAdminTab('orders')}
-          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-amber-300 cursor-pointer transition"
+          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-yellow-400 cursor-pointer transition"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Bids</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Zap className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-yellow-100 text-yellow-800 flex items-center justify-center">
+              <Zap className="w-4 h-4 fill-yellow-500" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-extrabold text-slate-900">{stats.totalBids + bids.length - 3}</span>
-            <span className="text-xs text-amber-600 font-medium flex items-center">
+            <span className="text-xs text-yellow-800 font-bold flex items-center">
               Active Auction
             </span>
           </div>
@@ -140,17 +150,17 @@ export const AdminDashboard: React.FC = () => {
         {/* Platform Revenue */}
         <div
           onClick={() => setAdminTab('payments')}
-          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-emerald-300 cursor-pointer transition col-span-2 md:col-span-1"
+          className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:border-red-300 cursor-pointer transition col-span-2 md:col-span-1"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Commission</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <span className="text-2xl font-extrabold text-slate-900">₹{stats.platformRevenue.toLocaleString()}</span>
-            <span className="text-xs text-emerald-600 font-medium flex items-center">
+            <span className="text-xs text-red-600 font-bold flex items-center">
               <ArrowUpRight className="w-3 h-3" /> +14.2%
             </span>
           </div>
@@ -168,7 +178,7 @@ export const AdminDashboard: React.FC = () => {
                 <h3 className="font-bold text-slate-900 text-base">Monthly Manpower Demand & Order Volume</h3>
                 <p className="text-xs text-slate-500 mt-0.5">Order postings vs Bids accepted across last 6 months</p>
               </div>
-              <span className="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg">
+              <span className="px-2.5 py-1 text-xs font-bold bg-yellow-100 text-yellow-900 border border-yellow-300 rounded-lg">
                 FY 2025-26
               </span>
             </div>
@@ -191,17 +201,17 @@ export const AdminDashboard: React.FC = () => {
                     {/* Bids Column */}
                     <div
                       style={{ height: item.height }}
-                      className="w-1/2 bg-teal-200 group-hover:bg-teal-300 rounded-t-md transition-all"
+                      className="w-1/2 bg-yellow-400 group-hover:bg-yellow-300 rounded-t-md transition-all shadow-2xs"
                     ></div>
                     {/* Orders Column */}
                     <div
                       style={{ height: `calc(${item.height} * 0.7)` }}
                       className={`w-1/2 rounded-t-md transition-all ${
-                        item.active ? 'bg-emerald-600' : 'bg-emerald-400 group-hover:bg-emerald-500'
+                        item.active ? 'bg-red-600' : 'bg-red-400 group-hover:bg-red-500'
                       }`}
                     ></div>
                   </div>
-                  <span className={`text-xs font-medium ${item.active ? 'font-bold text-emerald-700' : 'text-slate-500'}`}>
+                  <span className={`text-xs font-medium ${item.active ? 'font-extrabold text-red-600' : 'text-slate-500'}`}>
                     {item.month}
                   </span>
                 </div>
@@ -211,12 +221,12 @@ export const AdminDashboard: React.FC = () => {
 
           <div className="flex items-center justify-center space-x-6 pt-4 border-t border-slate-100 text-xs text-slate-600">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-sm bg-emerald-600"></span>
-              <span>Confirmed Orders</span>
+              <span className="w-3 h-3 rounded-sm bg-red-600"></span>
+              <span className="font-semibold">Confirmed Orders</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-sm bg-teal-200"></span>
-              <span>Worker Bids Submitted</span>
+              <span className="w-3 h-3 rounded-sm bg-yellow-400"></span>
+              <span className="font-semibold">Worker Bids Submitted</span>
             </div>
           </div>
         </div>
@@ -228,18 +238,18 @@ export const AdminDashboard: React.FC = () => {
               <h3 className="font-bold text-slate-900 text-base">Top Service Categories</h3>
               <button
                 onClick={() => setAdminTab('categories')}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
+                className="text-xs text-red-600 hover:text-red-700 font-bold"
               >
                 View all
               </button>
             </div>
             <div className="space-y-3.5">
               {[
-                { name: 'Loading & Unloading', count: '64 workers', pct: 85, color: 'bg-emerald-500' },
-                { name: 'House Cleaning', count: '52 workers', pct: 70, color: 'bg-teal-500' },
-                { name: 'Delivery Helper', count: '45 workers', pct: 60, color: 'bg-blue-500' },
-                { name: 'Construction Support', count: '41 workers', pct: 54, color: 'bg-amber-500' },
-                { name: 'Packing & Moving', count: '38 workers', pct: 48, color: 'bg-purple-500' },
+                { name: 'Loading & Unloading', count: '64 workers', pct: 85, color: 'bg-red-600' },
+                { name: 'House Cleaning', count: '52 workers', pct: 70, color: 'bg-yellow-500' },
+                { name: 'Delivery Helper', count: '45 workers', pct: 60, color: 'bg-amber-500' },
+                { name: 'Construction Support', count: '41 workers', pct: 54, color: 'bg-red-500' },
+                { name: 'Packing & Moving', count: '38 workers', pct: 48, color: 'bg-yellow-400' },
               ].map((cat) => (
                 <div key={cat.name}>
                   <div className="flex justify-between text-xs font-medium text-slate-700 mb-1">
@@ -257,12 +267,12 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 mt-4 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
-            <div className="flex items-center gap-2 text-emerald-900 text-xs font-semibold">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
+          <div className="pt-4 border-t border-slate-100 mt-4 bg-yellow-50/80 p-3 rounded-xl border border-yellow-200">
+            <div className="flex items-center gap-2 text-yellow-950 text-xs font-bold">
+              <TrendingUp className="w-4 h-4 text-red-600" />
               <span>Highest Growth: Loading & Unloading</span>
             </div>
-            <p className="text-[11px] text-emerald-700 mt-0.5">
+            <p className="text-[11px] text-yellow-800 mt-0.5">
               +38% surge in warehouse logistics demand this week in Mangalore.
             </p>
           </div>
@@ -280,7 +290,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
             <button
               onClick={() => setAdminTab('orders')}
-              className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
+              className="text-xs text-red-600 hover:text-red-700 font-bold"
             >
               See all orders →
             </button>
@@ -305,23 +315,23 @@ export const AdminDashboard: React.FC = () => {
                     <td className="py-3.5 px-4 font-medium">{order.category}</td>
                     <td className="py-3.5 px-4">
                       <span className="font-semibold text-slate-900">{order.requiredWorkers}</span>
-                      <span className="text-slate-400 text-[11px]"> ({order.assignedWorkerIds.length} assigned)</span>
+                      <span className="text-slate-400 text-[11px]"> ({order.assignedWorkerIds?.length ?? order.acceptedEmployees?.length ?? 0} assigned)</span>
                     </td>
-                    <td className="py-3.5 px-4 font-medium">₹{order.minBudget} - ₹{order.maxBudget}</td>
+                    <td className="py-3.5 px-4 font-medium">₹{order.amountPerHead || order.minBudget || 0}</td>
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                           order.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-yellow-100 text-yellow-950 border border-yellow-300 font-bold'
                             : order.status === 'assigned'
-                            ? 'bg-blue-100 text-blue-800'
+                            ? 'bg-red-100 text-red-800 font-bold'
                             : order.status === 'bidding'
-                            ? 'bg-amber-100 text-amber-800'
+                            ? 'bg-yellow-100 text-yellow-900 font-bold'
                             : 'bg-slate-100 text-slate-800'
                         }`}
                       >
                         {order.status === 'bidding' && <Clock className="w-3 h-3 mr-1" />}
-                        {order.status === 'completed' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                        {order.status === 'completed' && <CheckCircle2 className="w-3 h-3 mr-1 text-red-600" />}
                         {order.status.toUpperCase()}
                       </span>
                     </td>
@@ -331,7 +341,7 @@ export const AdminDashboard: React.FC = () => {
                           setSelectedJobId(order.id);
                           setAdminTab('orders');
                         }}
-                        className="px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
+                        className="px-2.5 py-1 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition"
                       >
                         Inspect Bids
                       </button>
@@ -348,7 +358,7 @@ export const AdminDashboard: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-slate-900 text-base">Live Bids Stream</h3>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 ring-2 ring-red-500 animate-pulse"></span>
             </div>
             <p className="text-xs text-slate-500 mb-4">Real-time quotes placed by registered workers</p>
 
@@ -370,10 +380,10 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-emerald-700 text-sm">₹{bid.amount.toLocaleString()}</span>
+                    <span className="font-bold text-red-600 text-sm">₹{bid.amount.toLocaleString()}</span>
                     <span
-                      className={`block text-[10px] font-semibold uppercase ${
-                        bid.status === 'accepted' ? 'text-emerald-600' : 'text-amber-600'
+                      className={`block text-[10px] font-bold uppercase ${
+                        bid.status === 'accepted' ? 'text-red-600' : 'text-yellow-600'
                       }`}
                     >
                       {bid.status}
@@ -388,13 +398,37 @@ export const AdminDashboard: React.FC = () => {
             <span className="text-slate-500">Commission model active:</span>
             <button
               onClick={() => setAdminTab('commission')}
-              className="font-bold text-emerald-600 hover:text-emerald-700"
+              className="font-bold text-red-600 hover:text-red-700"
             >
               10% Percentage →
             </button>
           </div>
         </div>
       </div>
+
+      {/* Google Play Console & Legal Modals */}
+      <PlayConsoleHubModal
+        isOpen={showPlayConsole}
+        onClose={() => setShowPlayConsole(false)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
+        onOpenTerms={() => setShowTerms(true)}
+        onOpenDeletion={() => setShowDeletion(true)}
+      />
+      <PrivacyPolicyModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        onOpenDataDeletion={() => setShowDeletion(true)}
+        onOpenTerms={() => setShowTerms(true)}
+      />
+      <TermsOfServiceModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
+      />
+      <AccountDeletionModal
+        isOpen={showDeletion}
+        onClose={() => setShowDeletion(false)}
+      />
     </div>
   );
 };

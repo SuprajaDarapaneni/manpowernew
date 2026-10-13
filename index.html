@@ -9,9 +9,41 @@
     <meta property="og:description" content="Temporary manpower bidding & workforce platform connecting employers and temporary workers with an admin management panel." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Play Store & PWA Metadata -->
+    <meta name="theme-color" content="#dc2626" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ManPowerLink" />
+    <meta name="application-name" content="ManPowerLink" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Browser Extension Defensive Guard: Prevent failures if external extensions attempt to assign window.fetch
+      (function() {
+        try {
+          var originalFetch = window.fetch;
+          var fetchDescriptor = Object.getOwnPropertyDescriptor(window, 'fetch') ||
+                                Object.getOwnPropertyDescriptor(Window.prototype, 'fetch');
+          if (!fetchDescriptor || !fetchDescriptor.set) {
+            Object.defineProperty(window, 'fetch', {
+              get: function() { return originalFetch; },
+              set: function(fn) { originalFetch = fn; },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          // Ignore if descriptor modification is disallowed
+        }
+      })();
+    </script>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased font-sans">
     <div id="root"></div>

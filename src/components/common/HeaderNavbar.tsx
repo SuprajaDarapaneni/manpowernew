@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Users,
   LayoutDashboard,
   Smartphone,
   HardHat,
@@ -10,29 +9,26 @@ import {
   Zap,
   CheckCircle,
   X,
-  ExternalLink,
   Code2,
   Server,
+  Megaphone,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { BrandLogo } from './BrandLogo';
 
-interface HeaderNavbarProps {
+interface Props {
   onOpenCodeViewer?: () => void;
   onOpenBackendStatus?: () => void;
-  onLaunchStandalone?: (app: 'admin' | 'customer' | 'employee') => void;
 }
 
-export const HeaderNavbar: React.FC<HeaderNavbarProps> = ({
+export const HeaderNavbar: React.FC<Props> = ({
   onOpenCodeViewer,
   onOpenBackendStatus,
-  onLaunchStandalone,
 }) => {
   const {
     currentRole,
     setCurrentRole,
     workers,
-    activeWorkerId,
-    setActiveWorkerId,
     simulateIncomingBid,
     resetDemoData,
     notifications,
@@ -42,256 +38,269 @@ export const HeaderNavbar: React.FC<HeaderNavbarProps> = ({
     customerAuth,
     employeeAuth,
     signOut,
-    loginAdmin,
-    loginCustomer,
-    loginEmployee,
+    setShowPushSimulator,
+    customization,
   } = useApp();
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const activeWorker = workers.find((w) => w.id === activeWorkerId) || workers[0];
-
-  const currentAuthUser =
-    currentRole === 'admin'
-      ? adminAuth
-      : currentRole === 'customer'
-      ? customerAuth
-      : currentRole === 'employee'
-      ? employeeAuth
-      : null;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo & Slogan */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="text-lg font-extrabold tracking-tight text-slate-900">
-                  ManPower<span className="text-emerald-600">Link</span>
-                </span>
-                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-emerald-100 text-emerald-800 rounded-full">
-                  Marketplace
-                </span>
+    <>
+      {/* Optional Broadcast Announcement Banner */}
+      {customization.showAnnouncementBanner && (
+        <div
+          className={`px-4 py-2 text-xs font-bold flex items-center justify-center space-x-2 border-b transition-all ${
+            customization.announcementType === 'urgent'
+              ? 'bg-red-600 text-white border-red-700'
+              : customization.announcementType === 'offer'
+              ? 'bg-yellow-400 text-slate-950 border-yellow-500'
+              : customization.announcementType === 'advisory'
+              ? 'bg-amber-500 text-white border-amber-600'
+              : 'bg-slate-900 text-white border-slate-800'
+          }`}
+        >
+          <Megaphone className="w-3.5 h-3.5 shrink-0" />
+          <span>{customization.announcementText}</span>
+        </div>
+      )}
+
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Brand Logo & Slogan */}
+            <div className="flex items-center space-x-3">
+              <BrandLogo
+                type={customization.logoType}
+                icon={customization.logoIcon}
+                imageUrl={customization.logoImageUrl}
+                shape={customization.logoShape}
+                gradient={customization.logoGradient}
+                size="md"
+              />
+              <div>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-lg font-extrabold tracking-tight text-slate-900">
+                    {customization.appName}
+                  </span>
+                  <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] uppercase font-black tracking-wider bg-emerald-600 text-white rounded-full shadow-2xs">
+                    Admin Console
+                  </span>
+                </div>
+                <p className="hidden md:block text-[11px] text-slate-500 font-medium">
+                  {customization.tagline}
+                </p>
               </div>
-              <p className="hidden md:block text-[11px] text-slate-500 font-medium">
-                Connect • Hire • Get Work Done
-              </p>
             </div>
-          </div>
 
-          {/* App / Mode Switcher Buttons */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80 text-xs sm:text-sm font-semibold">
-            <button
-              onClick={() => setCurrentRole('admin')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                currentRole === 'admin'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold border border-slate-200/60'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              <LayoutDashboard className="w-4 h-4 text-emerald-600" />
-              <span>Admin Web Panel</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentRole('customer')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                currentRole === 'customer'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold border border-slate-200/60'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              <Smartphone className="w-4 h-4 text-teal-600" />
-              <span>Customer App</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentRole('employee')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                currentRole === 'employee'
-                  ? 'bg-white text-slate-900 shadow-sm font-bold border border-slate-200/60'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              <HardHat className="w-4 h-4 text-amber-600" />
-              <span>Employee App</span>
-            </button>
-
-            <button
-              onClick={() => setCurrentRole('split')}
-              className={`hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                currentRole === 'split'
-                  ? 'bg-emerald-600 text-white shadow-sm font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-              title="Compare all flows side-by-side in real-time"
-            >
-              <Columns className="w-4 h-4" />
-              <span>Live Split View</span>
-            </button>
-          </div>
-
-          {/* Quick Actions & Notifications */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* If in Employee mode, show profile switcher */}
-            {currentRole === 'employee' && (
-              <div className="hidden sm:flex items-center space-x-1.5 bg-amber-50 border border-amber-200/80 px-2 py-1 rounded-lg text-xs text-amber-900">
-                <span className="text-[11px] text-amber-700">Worker:</span>
-                <select
-                  value={activeWorkerId}
-                  onChange={(e) => setActiveWorkerId(e.target.value)}
-                  className="bg-transparent font-semibold cursor-pointer outline-none text-xs"
-                >
-                  {workers.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name} ({w.category})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Backend API Status & Inspector button */}
-            {onOpenBackendStatus && (
+            {/* Primary App Switcher (Admin, Customer, Worker, Split View) */}
+            <nav className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
               <button
-                onClick={onOpenBackendStatus}
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-300 text-emerald-800 text-xs font-semibold shadow-xs transition"
-                title="View Express REST API endpoints & execute live tests"
+                type="button"
+                onClick={() => setCurrentRole('admin')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  currentRole === 'admin'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                }`}
+                title="Admin Web Management Dashboard"
               >
-                <span className={`w-2 h-2 rounded-full ${backendConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                <Server className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden sm:inline">Backend API</span>
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Admin Console</span>
+                <span className="sm:hidden">Admin</span>
               </button>
-            )}
 
-            {/* Separate App Code button */}
-            {onOpenCodeViewer && (
               <button
+                type="button"
+                onClick={() => setCurrentRole('customer')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  currentRole === 'customer'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                }`}
+                title="Customer / Employer Mobile App Preview"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Customer App</span>
+                <span className="sm:hidden">Customer</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentRole('employee')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  currentRole === 'employee'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                }`}
+                title="Worker / Employee Mobile App Preview"
+              >
+                <HardHat className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Worker App</span>
+                <span className="sm:hidden">Worker</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentRole('split')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  currentRole === 'split'
+                    ? 'bg-slate-900 text-yellow-400 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                }`}
+                title="Live Multi-App Split Ecosystem Simulator"
+              >
+                <Columns className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Split View</span>
+                <span className="md:hidden">Split</span>
+                <span className="hidden lg:inline text-[9px] bg-yellow-400/20 text-yellow-800 px-1.5 py-0.5 rounded font-black">
+                  Live
+                </span>
+              </button>
+            </nav>
+
+            {/* Architecture Code & Backend Health Quick Links */}
+            <div className="hidden xl:flex items-center space-x-1.5">
+              <button
+                type="button"
                 onClick={onOpenCodeViewer}
-                className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition"
-                title="View and export isolated codebases for Admin, Customer & Employee apps"
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 text-xs font-bold transition cursor-pointer"
+                title="Inspect 3 Separated Apps Architecture & Code"
               >
-                <Code2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden md:inline">Separate App Code</span>
+                <Code2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Apps Code</span>
               </button>
-            )}
 
-            {/* Quick simulate bid button */}
-            <button
-              onClick={simulateIncomingBid}
-              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold transition"
-              title="Simulate a new bid from a nearby worker"
-            >
-              <Zap className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
-              <span className="hidden sm:inline">Simulate Bid</span>
-            </button>
+              <button
+                type="button"
+                onClick={onOpenBackendStatus}
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-300 text-xs font-bold transition cursor-pointer"
+                title="Check Live MongoDB Atlas & API Health"
+              >
+                <Server className="w-3.5 h-3.5 text-blue-600" />
+                <span>MongoDB Health</span>
+              </button>
+            </div>
 
-            {/* Reset Demo button */}
-            <button
-              onClick={resetDemoData}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition"
-              title="Reset Demo State"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            {/* Quick Actions & Notifications */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              {/* Quick worker bid trigger */}
+              <button
+                onClick={simulateIncomingBid}
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-500 border border-amber-500 text-slate-950 text-xs font-bold transition shadow-2xs"
+                title="Simulate incoming worker bid on Order #1045"
+              >
+                <Zap className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                <span className="hidden sm:inline">Simulate Bid</span>
+              </button>
 
-            {/* Signed In User Status Badge */}
-            {currentRole !== 'split' && (
+              {/* Push Notification Simulator Button */}
+              <button
+                onClick={() => setShowPushSimulator(true)}
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition cursor-pointer shadow-2xs"
+                title="Test push notification alerts (new bids, accepted jobs, payouts)"
+              >
+                <Bell className="w-3.5 h-3.5 text-amber-300" />
+                <span className="hidden sm:inline">Push Alerts</span>
+              </button>
+
+              {/* Reset Demo button */}
+              <button
+                onClick={resetDemoData}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition"
+                title="Reset Demo State"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+
+              {/* Signed In Admin User Status Badge */}
               <div className="hidden lg:flex items-center space-x-1 pl-1 border-l border-slate-200">
-                {currentAuthUser ? (
+                {adminAuth ? (
                   <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-xs">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span className="font-semibold text-slate-700 truncate max-w-[120px]">
-                      {currentAuthUser.name.split(' ')[0]}
+                      {adminAuth.name}
                     </span>
                     <button
-                      onClick={() => signOut(currentRole as 'admin' | 'customer' | 'employee')}
+                      onClick={() => signOut('admin')}
                       className="text-slate-400 hover:text-rose-600 transition ml-1"
-                      title={`Sign Out from ${currentRole} app`}
+                      title="Sign Out"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : (
-                  <div
-                    className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold"
-                    title="Sign-in is compulsory before accessing this application"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span>Login Compulsory</span>
+                  <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Admin Active</span>
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Notification Bell */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
-                title="View Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {notifications.length > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white"></span>
-                )}
-              </button>
+              {/* Notification Bell */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+                  title="View Notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {notifications.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span>
+                  )}
+                </button>
 
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 text-slate-800">
-                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-                    <span className="font-bold text-xs uppercase tracking-wider text-slate-500">
-                      Live Platform Activity ({notifications.length})
-                    </span>
-                    <button
-                      onClick={() => setShowNotifications(false)}
-                      className="text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                {/* Notification Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 p-3 z-50 text-slate-800">
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                      <span className="font-bold text-xs uppercase tracking-wider text-slate-500">
+                        Live Platform Activity ({notifications.length})
+                      </span>
+                      <button
+                        onClick={() => setShowNotifications(false)}
+                        className="text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
 
-                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                    {notifications.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-4 text-center">No new notifications</p>
-                    ) : (
-                      notifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 text-xs relative group transition"
-                        >
-                          <div className="flex items-start justify-between">
-                            <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                              {notif.type === 'bid' && <Zap className="w-3.5 h-3.5 text-amber-500" />}
-                              {notif.type === 'success' && <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />}
-                              {notif.title}
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {notifications.length === 0 ? (
+                        <p className="text-xs text-slate-400 py-4 text-center">No new notifications</p>
+                      ) : (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 text-xs relative group transition"
+                          >
+                            <div className="flex items-start justify-between">
+                              <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                                {notif.type === 'bid' && <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />}
+                                {notif.type === 'success' && <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />}
+                                {notif.title}
+                              </span>
+                              <button
+                                onClick={() => dismissNotification(notif.id)}
+                                className="text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <p className="text-slate-600 mt-1">{notif.message}</p>
+                            <span className="text-[10px] text-slate-400 mt-1 block font-medium">
+                              {notif.timestamp}
                             </span>
-                            <button
-                              onClick={() => dismissNotification(notif.id)}
-                              className="text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
                           </div>
-                          <p className="text-slate-600 mt-1">{notif.message}</p>
-                          <span className="text-[10px] text-slate-400 mt-1 block font-medium">
-                            {notif.timestamp}
-                          </span>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 };

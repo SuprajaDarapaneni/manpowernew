@@ -13,7 +13,7 @@ import {
 import { useApp } from '../../context/AppContext';
 
 export const ReportsView: React.FC = () => {
-  const { stats, commission, orders } = useApp();
+  const { stats, commission, orders, triggerPushToast } = useApp();
 
   return (
     <div className="space-y-6">
@@ -27,8 +27,15 @@ export const ReportsView: React.FC = () => {
         </div>
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => alert('Exporting full analytics CSV ledger...')}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5"
+            onClick={() => {
+              triggerPushToast({
+                type: 'general',
+                title: 'Export Started',
+                message: 'Exporting full marketplace transactions and commission CSV ledger...',
+                targetRole: 'admin',
+              });
+            }}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
@@ -56,26 +63,26 @@ export const ReportsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Monthly Order Volume matching Screenshot 7 (₹1,25,600) */}
+        {/* Monthly Order Volume (₹1,25,600) */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
               Gross Monthly Order Volume
             </span>
-            <span className="text-4xl font-extrabold text-emerald-700 mt-1 block">
+            <span className="text-4xl font-extrabold text-slate-900 mt-1 block">
               ₹1,25,600
             </span>
-            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-2">
+            <span className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-2">
               <TrendingUp className="w-3.5 h-3.5" /> ₹{stats.platformRevenue.toLocaleString()} Net Commission
             </span>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-yellow-50 text-yellow-700 flex items-center justify-center">
             <IndianRupee className="w-7 h-7" />
           </div>
         </div>
       </div>
 
-      {/* Monthly Orders Visual Graph matching Screen 7 */}
+      {/* Monthly Orders Visual Graph */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -93,8 +100,8 @@ export const ReportsView: React.FC = () => {
             {/* Gradient definition */}
             <defs>
               <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                <stop offset="0%" stopColor="#dc2626" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#eab308" stopOpacity="0.0" />
               </linearGradient>
             </defs>
 
@@ -107,7 +114,7 @@ export const ReportsView: React.FC = () => {
             {/* Polyline line */}
             <polyline
               fill="none"
-              stroke="#059669"
+              stroke="#dc2626"
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -124,7 +131,7 @@ export const ReportsView: React.FC = () => {
               { x: 460, y: 20, val: '₹125.6k' },
             ].map((p, i) => (
               <g key={i}>
-                <circle cx={p.x} cy={p.y} r="5" fill="#ffffff" stroke="#059669" strokeWidth="2.5" />
+                <circle cx={p.x} cy={p.y} r="5" fill="#ffffff" stroke="#dc2626" strokeWidth="2.5" />
                 <text x={p.x} y={p.y - 10} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#0f172a">
                   {p.val}
                 </text>
@@ -140,7 +147,7 @@ export const ReportsView: React.FC = () => {
           <span>June</span>
           <span>July</span>
           <span>August</span>
-          <span className="text-emerald-700 font-bold">September (Current)</span>
+          <span className="text-red-600 font-bold">September (Current)</span>
         </div>
       </div>
 
@@ -150,10 +157,10 @@ export const ReportsView: React.FC = () => {
           <h3 className="font-bold text-slate-900 text-base mb-4">Revenue Contribution by Category</h3>
           <div className="space-y-4">
             {[
-              { name: 'Loading & Unloading', revenue: '₹54,200', pct: 43, color: 'bg-emerald-500' },
-              { name: 'House Cleaning', revenue: '₹31,400', pct: 25, color: 'bg-teal-500' },
-              { name: 'Packing & Moving', revenue: '₹22,600', pct: 18, color: 'bg-blue-500' },
-              { name: 'Construction Support', revenue: '₹17,400', pct: 14, color: 'bg-amber-500' },
+              { name: 'Loading & Unloading', revenue: '₹54,200', pct: 43, color: 'bg-red-600' },
+              { name: 'House Cleaning', revenue: '₹31,400', pct: 25, color: 'bg-yellow-500' },
+              { name: 'Packing & Moving', revenue: '₹22,600', pct: 18, color: 'bg-amber-500' },
+              { name: 'Construction Support', revenue: '₹17,400', pct: 14, color: 'bg-slate-700' },
             ].map((c) => (
               <div key={c.name}>
                 <div className="flex justify-between text-xs font-medium text-slate-700 mb-1">
@@ -173,23 +180,23 @@ export const ReportsView: React.FC = () => {
             <h3 className="font-bold text-slate-900 text-base mb-3">Key Highlights</h3>
             <ul className="space-y-3 text-xs text-slate-600">
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>94.2% of posted manpower jobs receive bids within 15 minutes.</span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>Average rating across all completed jobs is 4.78 / 5.0.</span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                 <span>Zero payment disputes reported in September.</span>
               </li>
             </ul>
           </div>
 
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 mt-4">
+          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-950 mt-4">
             <span className="font-bold block">Commission Efficiency</span>
-            <span>Platform fee collection operates at 100% automated settlement.</span>
+            <span>Platform fee collection operates at 100% automated settlement from in-app worker wallets.</span>
           </div>
         </div>
       </div>

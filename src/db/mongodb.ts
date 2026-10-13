@@ -7,6 +7,7 @@ import {
   Bid,
   CommissionSettings,
   NotificationItem,
+  RegisteredUser,
 } from '../types';
 import {
   INITIAL_CATEGORIES,
@@ -22,6 +23,125 @@ dotenv.config();
 const DEFAULT_URI =
   process.env.MONGODB_URI ||
   'mongodb+srv://saisuppu1_db_user:qsosbimXheAv6tsG@cluster0.dzxw5pm.mongodb.net/manpowerlink_db?retryWrites=true&w=majority';
+
+export const INITIAL_USERS: RegisteredUser[] = [
+  {
+    id: 'admin-1',
+    name: 'Super Admin',
+    role: 'admin',
+    emailOrPhone: 'admin@gmail.com',
+    password: 'admin',
+    verified: true,
+    createdAt: '2026-10-01T10:00:00Z',
+  },
+  {
+    id: 'admin-2',
+    name: 'Platform Admin',
+    role: 'admin',
+    emailOrPhone: 'admin@manpowerlink.com',
+    password: 'admin123',
+    verified: true,
+    createdAt: '2026-10-01T10:00:00Z',
+  },
+  {
+    id: 'cust-101',
+    name: 'Kiran Transport & Co.',
+    businessName: 'Kiran Transport & Co.',
+    role: 'customer',
+    emailOrPhone: '+91 98450 11223',
+    location: 'Mangalore, Karnataka',
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-01T11:00:00Z',
+  },
+  {
+    id: 'cust-102',
+    name: 'Apex Warehousing Ltd',
+    businessName: 'Apex Warehousing Ltd',
+    role: 'customer',
+    emailOrPhone: '+91 98450 44556',
+    location: 'Bangalore, Karnataka',
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-02T09:30:00Z',
+  },
+  {
+    id: 'cust-103',
+    name: 'Skyline Events & Catering',
+    businessName: 'Skyline Events & Catering',
+    role: 'customer',
+    emailOrPhone: '+91 98450 77889',
+    location: 'Udupi, Karnataka',
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-02T10:00:00Z',
+  },
+  {
+    id: 'w-ramesh',
+    name: 'Ramesh Gowda',
+    role: 'employee',
+    emailOrPhone: '+91 98765 43210',
+    workerCategory: 'Loading & Unloading',
+    hourlyRate: 250,
+    location: 'Baikampady, Mangalore',
+    rating: 4.8,
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-01T08:00:00Z',
+  },
+  {
+    id: 'w-suresh',
+    name: 'Suresh Poojary',
+    role: 'employee',
+    emailOrPhone: '+91 98765 11223',
+    workerCategory: 'Masonry & Concrete',
+    hourlyRate: 350,
+    location: 'Surathkal, Mangalore',
+    rating: 4.9,
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-01T09:00:00Z',
+  },
+  {
+    id: 'w-manjunath',
+    name: 'Manjunath Rao',
+    role: 'employee',
+    emailOrPhone: '+91 97410 88231',
+    workerCategory: 'Packing & Moving',
+    hourlyRate: 290,
+    location: 'Kankanady, Mangalore',
+    rating: 4.9,
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-01T09:30:00Z',
+  },
+  {
+    id: 'w-venkatesh',
+    name: 'Venkatesh Prasad',
+    role: 'employee',
+    emailOrPhone: '+91 94480 66522',
+    workerCategory: 'Construction Support',
+    hourlyRate: 270,
+    location: 'Kadri Hills, Mangalore',
+    rating: 4.7,
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-01T10:00:00Z',
+  },
+  {
+    id: 'w-priya',
+    name: "Priya D'Souza",
+    role: 'employee',
+    emailOrPhone: '+91 99001 44552',
+    workerCategory: 'House Cleaning',
+    hourlyRate: 220,
+    location: 'Bejai, Mangalore',
+    rating: 4.9,
+    password: '1234',
+    verified: true,
+    createdAt: '2026-10-01T10:30:00Z',
+  },
+];
 
 export interface MongoDbStatus {
   connected: boolean;
@@ -49,6 +169,7 @@ class MongoDBService {
   public memBids: Bid[] = JSON.parse(JSON.stringify(INITIAL_BIDS));
   public memCommission: CommissionSettings = JSON.parse(JSON.stringify(INITIAL_COMMISSION));
   public memStats = JSON.parse(JSON.stringify(INITIAL_STATS));
+  public memUsers: RegisteredUser[] = JSON.parse(JSON.stringify(INITIAL_USERS));
   public memNotifications: NotificationItem[] = [
     {
       id: 'notif-1',
@@ -94,6 +215,7 @@ class MongoDBService {
       this.connectionError = null;
       console.log(`[MongoDB] Successfully connected to MongoDB Atlas (${this.dbName})!`);
       await this.seedInitialDataIfEmpty();
+      await this.syncAndEnsureUsers();
       return true;
     } catch (err: any) {
       this.isConnected = false;
@@ -114,11 +236,66 @@ class MongoDBService {
         await this.db.collection('workers').insertMany(INITIAL_WORKERS);
         await this.db.collection('job_orders').insertMany(INITIAL_ORDERS);
         await this.db.collection('bids').insertMany(INITIAL_BIDS);
+        await this.db.collection('users').insertMany(INITIAL_USERS);
         await this.db.collection('commission_settings').insertOne({ ...INITIAL_COMMISSION, _id: 'main_policy' as any });
         console.log('[MongoDB] Seeding completed successfully!');
       }
     } catch (e: any) {
       console.warn('[MongoDB] Seeding note:', e.message);
+    }
+  }
+
+  public async syncAndEnsureUsers(): Promise<void> {
+    if (!this.db || !this.isConnected) return;
+    try {
+      const usersCol = this.db.collection<RegisteredUser>('users');
+      for (const initialUser of INITIAL_USERS) {
+        const cleanDigits = initialUser.emailOrPhone.replace(/[\s+-]/g, '');
+        const query: any = {
+          $or: [
+            { id: initialUser.id },
+            { emailOrPhone: initialUser.emailOrPhone },
+            { emailOrPhone: initialUser.emailOrPhone.toLowerCase() },
+          ],
+        };
+        if (cleanDigits.length >= 8) {
+          query.$or.push({ emailOrPhone: { $regex: cleanDigits.slice(-10), $options: 'i' } });
+        }
+
+        const existing = await usersCol.findOne(query);
+        if (!existing) {
+          await usersCol.insertOne(initialUser);
+          console.log(`[MongoDB] Added missing initial user to Atlas: ${initialUser.name} (${initialUser.emailOrPhone})`);
+        } else if (!existing.password || existing.password !== initialUser.password) {
+          await usersCol.updateOne(
+            { _id: existing._id },
+            { $set: { password: initialUser.password, role: initialUser.role, verified: true } }
+          );
+          console.log(`[MongoDB] Verified & updated credentials in Atlas for: ${initialUser.name}`);
+        }
+      }
+
+      // Also ensure all workers exist in workers collection
+      const workersCol = this.db.collection<Worker>('workers');
+      for (const w of INITIAL_WORKERS) {
+        const existingWorker = await workersCol.findOne({ id: w.id });
+        if (!existingWorker) {
+          await workersCol.insertOne(w);
+          console.log(`[MongoDB] Added missing worker profile to Atlas: ${w.name}`);
+        }
+      }
+
+      // Refresh in-memory mirror from Atlas
+      const atlasUsers = await usersCol.find().toArray();
+      if (atlasUsers.length > 0) {
+        this.memUsers = atlasUsers;
+      }
+      const atlasWorkers = await workersCol.find().toArray();
+      if (atlasWorkers.length > 0) {
+        this.memWorkers = atlasWorkers;
+      }
+    } catch (e: any) {
+      console.warn('[MongoDB] syncAndEnsureUsers warning:', e.message);
     }
   }
 
@@ -135,6 +312,7 @@ class MongoDBService {
     }
 
     const collections = [
+      { name: 'users', count: this.memUsers.length },
       { name: 'service_categories', count: this.memCategories.length },
       { name: 'workers', count: this.memWorkers.length },
       { name: 'job_orders', count: this.memOrders.length },
@@ -145,14 +323,16 @@ class MongoDBService {
 
     if (this.isConnected && this.db) {
       try {
+        const userCount = await this.db.collection('users').countDocuments();
         const catCount = await this.db.collection('service_categories').countDocuments();
         const workerCount = await this.db.collection('workers').countDocuments();
         const orderCount = await this.db.collection('job_orders').countDocuments();
         const bidCount = await this.db.collection('bids').countDocuments();
-        collections[0].count = catCount;
-        collections[1].count = workerCount;
-        collections[2].count = orderCount;
-        collections[3].count = bidCount;
+        collections[0].count = userCount;
+        collections[1].count = catCount;
+        collections[2].count = workerCount;
+        collections[3].count = orderCount;
+        collections[4].count = bidCount;
       } catch (err) {
         // use fallback counts
       }
@@ -210,6 +390,38 @@ class MongoDBService {
     return null;
   }
 
+  public async updateCategory(id: string, updates: Partial<ServiceCategory>): Promise<ServiceCategory | null> {
+    const target = this.memCategories.find((c) => c.id === id);
+    if (target) {
+      Object.assign(target, updates);
+      if (this.isConnected && this.db) {
+        try {
+          await this.db.collection('service_categories').updateOne({ id }, { $set: updates });
+        } catch (e) {
+          // ignore
+        }
+      }
+      return target;
+    }
+    return null;
+  }
+
+  public async deleteCategory(id: string): Promise<boolean> {
+    const index = this.memCategories.findIndex((c) => c.id === id);
+    if (index !== -1) {
+      this.memCategories.splice(index, 1);
+      if (this.isConnected && this.db) {
+        try {
+          await this.db.collection('service_categories').deleteOne({ id });
+        } catch (e) {
+          // ignore
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
   // Workers
   public async getWorkers(): Promise<Worker[]> {
     if (this.isConnected && this.db) {
@@ -235,6 +447,17 @@ class MongoDBService {
       return worker;
     }
     return null;
+  }
+
+  public async addWorker(worker: Worker): Promise<void> {
+    this.memWorkers.unshift(worker);
+    if (this.isConnected && this.db) {
+      try {
+        await this.db.collection('workers').insertOne(worker);
+      } catch (e) {
+        console.warn('[MongoDB] Worker insert warning:', e);
+      }
+    }
   }
 
   // Orders
@@ -346,6 +569,157 @@ class MongoDBService {
     this.memNotifications = this.memNotifications.filter((n) => n.id !== id);
   }
 
+  // Users
+  public async getUsers(): Promise<RegisteredUser[]> {
+    if (this.isConnected && this.db) {
+      try {
+        const items = await this.db.collection<RegisteredUser>('users').find().toArray();
+        if (items && items.length > 0) return items;
+      } catch (e) {}
+    }
+    return this.memUsers;
+  }
+
+  public async addUser(user: RegisteredUser): Promise<void> {
+    const existingIndex = this.memUsers.findIndex((u) => u.id === user.id || u.emailOrPhone === user.emailOrPhone);
+    if (existingIndex >= 0) {
+      this.memUsers[existingIndex] = { ...this.memUsers[existingIndex], ...user };
+    } else {
+      this.memUsers.unshift(user);
+    }
+
+    if (this.isConnected && this.db) {
+      try {
+        await this.db.collection('users').updateOne(
+          { $or: [{ id: user.id }, { emailOrPhone: user.emailOrPhone }] },
+          { $set: user },
+          { upsert: true }
+        );
+      } catch (e) {
+        console.warn('[MongoDB] User upsert warning:', e);
+      }
+    }
+  }
+
+  public async findUser(emailOrPhone: string): Promise<RegisteredUser | undefined> {
+    const clean = emailOrPhone.trim().toLowerCase();
+    const cleanNumeric = emailOrPhone.replace(/[\s+-]/g, '');
+
+    if (this.isConnected && this.db) {
+      try {
+        const query: any = {
+          $or: [
+            { emailOrPhone: emailOrPhone.trim() },
+            { id: emailOrPhone.trim() },
+            { emailOrPhone: clean },
+          ],
+        };
+        if (cleanNumeric.length >= 7) {
+          query.$or.push({ emailOrPhone: { $regex: cleanNumeric.slice(-10), $options: 'i' } });
+        }
+        const found = await this.db.collection<RegisteredUser>('users').findOne(query);
+        if (found) return found;
+      } catch (e) {}
+    }
+
+    return this.memUsers.find((u) => {
+      const uEmailOrPhone = u.emailOrPhone.toLowerCase();
+      const uNumeric = u.emailOrPhone.replace(/[\s+-]/g, '');
+      return (
+        uEmailOrPhone === clean ||
+        u.id.toLowerCase() === clean ||
+        (cleanNumeric.length > 5 && uNumeric.includes(cleanNumeric.slice(-8))) ||
+        (Boolean((u as any).phone) && (u as any).phone.replace(/[\s+-]/g, '').includes(cleanNumeric.slice(-8)))
+      );
+    });
+  }
+
+  public async updateUserPassword(emailOrPhone: string, newPassword: string): Promise<boolean> {
+    const clean = emailOrPhone.trim().toLowerCase();
+    const cleanNumeric = emailOrPhone.replace(/[\s+-]/g, '');
+
+    // Update in memory
+    const user = this.memUsers.find((u) => {
+      const uEmailOrPhone = u.emailOrPhone.toLowerCase();
+      const uNumeric = u.emailOrPhone.replace(/[\s+-]/g, '');
+      return (
+        uEmailOrPhone === clean ||
+        u.id.toLowerCase() === clean ||
+        (cleanNumeric.length > 5 && uNumeric === cleanNumeric)
+      );
+    });
+
+    if (user) {
+      user.password = newPassword;
+    }
+
+    // Update in MongoDB
+    if (this.isConnected && this.db) {
+      try {
+        await this.db.collection('users').updateOne(
+          {
+            $or: [
+              { emailOrPhone: emailOrPhone.trim() },
+              { emailOrPhone: clean },
+              { id: emailOrPhone.trim() },
+            ],
+          },
+          { $set: { password: newPassword } }
+        );
+      } catch (e) {
+        console.warn('[MongoDB] updateUserPassword warning:', e);
+      }
+    }
+
+    return true;
+  }
+
+  public async deleteUser(emailOrPhone: string): Promise<boolean> {
+    const clean = emailOrPhone.trim().toLowerCase();
+    const cleanNumeric = emailOrPhone.replace(/[\s+-]/g, '');
+
+    // Remove from in-memory array
+    const initialLen = this.memUsers.length;
+    this.memUsers = this.memUsers.filter((u) => {
+      const uEmailOrPhone = u.emailOrPhone.toLowerCase();
+      const uNumeric = u.emailOrPhone.replace(/[\s+-]/g, '');
+      const match =
+        uEmailOrPhone === clean ||
+        u.id.toLowerCase() === clean ||
+        (cleanNumeric.length > 5 && uNumeric === cleanNumeric);
+      return !match;
+    });
+
+    // Also remove from workers if registered as worker
+    this.memWorkers = this.memWorkers.filter((w) => {
+      const wPhone = w.phone.replace(/[\s+-]/g, '');
+      return wPhone !== cleanNumeric && w.id !== clean;
+    });
+
+    // Remove from MongoDB Atlas
+    if (this.isConnected && this.db) {
+      try {
+        await this.db.collection('users').deleteMany({
+          $or: [
+            { emailOrPhone: emailOrPhone.trim() },
+            { emailOrPhone: clean },
+            { id: emailOrPhone.trim() },
+          ],
+        });
+        await this.db.collection('workers').deleteMany({
+          $or: [
+            { phone: emailOrPhone.trim() },
+            { id: emailOrPhone.trim() },
+          ],
+        });
+      } catch (e) {
+        console.warn('[MongoDB] deleteUser warning:', e);
+      }
+    }
+
+    return true;
+  }
+
   // Reset
   public async resetData(): Promise<void> {
     this.memCategories = JSON.parse(JSON.stringify(INITIAL_CATEGORIES));
@@ -354,12 +728,14 @@ class MongoDBService {
     this.memBids = JSON.parse(JSON.stringify(INITIAL_BIDS));
     this.memCommission = JSON.parse(JSON.stringify(INITIAL_COMMISSION));
     this.memStats = JSON.parse(JSON.stringify(INITIAL_STATS));
+    this.memUsers = JSON.parse(JSON.stringify(INITIAL_USERS));
     if (this.isConnected && this.db) {
       try {
         await this.db.collection('service_categories').deleteMany({});
         await this.db.collection('workers').deleteMany({});
         await this.db.collection('job_orders').deleteMany({});
         await this.db.collection('bids').deleteMany({});
+        await this.db.collection('users').deleteMany({});
         await this.seedInitialDataIfEmpty();
       } catch (e) {}
     }

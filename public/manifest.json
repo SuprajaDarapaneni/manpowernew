@@ -1,0 +1,85 @@
+{
+  "id": "/?source=pwa",
+  "start_url": "/",
+  "scope": "/",
+  "name": "ManPowerLink - Temporary Manpower Marketplace",
+  "short_name": "ManPowerLink",
+  "description": "On-demand temporary manpower booking, bidding & workforce management platform connecting employers and verified workers.",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#dc2626",
+  "theme_color": "#dc2626",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Customer / Employer App",
+      "short_name": "Post Work",
+      "description": "Post manpower requirements and accept worker quotes",
+      "url": "/?app=customer",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Employee / Worker App",
+      "short_name": "Find Jobs",
+      "description": "View available shifts and submit work quotes",
+      "url": "/?app=employee",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Admin Management Web Panel",
+      "short_name": "Admin Panel",
+      "description": "Manage workforce, service categories and commissions",
+      "url": "/?app=admin",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": []
+}

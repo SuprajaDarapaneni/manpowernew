@@ -27,7 +27,7 @@ export const OrdersPaymentsView: React.FC = () => {
   });
 
   const totalCalculatedRevenue = orders.reduce((sum, o) => sum + (o.commissionDeducted || 0), 0);
-  const totalVolume = orders.reduce((sum, o) => sum + (o.totalAgreedAmount || o.minBudget), 0);
+  const totalVolume = orders.reduce((sum, o) => sum + (o.finalTotalAmount || o.totalAgreedAmount || o.estimatedManpowerCost || o.minBudget || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -40,9 +40,9 @@ export const OrdersPaymentsView: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
-            <span className="text-emerald-800 font-semibold block">Total Commission Collected:</span>
-            <span className="text-lg font-extrabold text-emerald-700">
+          <div className="px-4 py-2 bg-yellow-50 border border-yellow-300 rounded-xl text-xs">
+            <span className="text-yellow-950 font-semibold block">Total Commission Collected:</span>
+            <span className="text-lg font-extrabold text-red-600">
               ₹{(stats.platformRevenue + totalCalculatedRevenue).toLocaleString()}
             </span>
           </div>
@@ -58,7 +58,7 @@ export const OrdersPaymentsView: React.FC = () => {
             placeholder="Search by order #, customer, service..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-emerald-500"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-red-500"
           />
         </div>
 
@@ -66,7 +66,7 @@ export const OrdersPaymentsView: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:border-emerald-500 bg-white"
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium text-slate-700 focus:outline-none focus:border-red-500 bg-white"
           >
             <option value="all">All Statuses</option>
             <option value="bidding">Bidding In Progress</option>
@@ -95,7 +95,7 @@ export const OrdersPaymentsView: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredOrders.map((order) => {
-                const totalAmount = order.totalAgreedAmount || order.minBudget;
+                const totalAmount = order.finalTotalAmount || order.totalAgreedAmount || order.estimatedManpowerCost || order.minBudget || 0;
                 const commissionVal = order.commissionDeducted || Math.round(totalAmount * 0.1);
 
                 return (
@@ -107,20 +107,20 @@ export const OrdersPaymentsView: React.FC = () => {
                       <span className="text-[11px] text-slate-400">{order.location}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="font-bold text-slate-900">{order.assignedWorkerIds.length}</span>
+                      <span className="font-bold text-slate-900">{(order.assignedWorkerIds?.length ?? order.acceptedEmployees?.length ?? 0)}</span>
                       <span className="text-slate-400"> / {order.requiredWorkers} workers</span>
                     </td>
                     <td className="py-4 px-6 font-extrabold text-slate-900">
                       ₹{totalAmount.toLocaleString()}
                     </td>
-                    <td className="py-4 px-6 font-bold text-emerald-700">
+                    <td className="py-4 px-6 font-bold text-red-600">
                       +₹{commissionVal.toLocaleString()}
                     </td>
                     <td className="py-4 px-6 text-center">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                           order.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-yellow-100 text-yellow-950 border border-yellow-300'
                             : order.status === 'assigned'
                             ? 'bg-blue-100 text-blue-800'
                             : order.status === 'bidding'
@@ -128,7 +128,7 @@ export const OrdersPaymentsView: React.FC = () => {
                             : 'bg-slate-100 text-slate-700'
                         }`}
                       >
-                        {order.status === 'completed' && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                        {order.status === 'completed' && <CheckCircle2 className="w-3 h-3 mr-1 text-red-600" />}
                         {order.status === 'bidding' && <Clock className="w-3 h-3 mr-1" />}
                         {order.status.toUpperCase()}
                       </span>
@@ -139,7 +139,7 @@ export const OrdersPaymentsView: React.FC = () => {
                           setSelectedJobId(order.id);
                           setAdminTab('orders');
                         }}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 font-semibold rounded-lg text-xs transition"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-700 font-semibold rounded-lg text-xs transition"
                       >
                         View Order
                       </button>

@@ -1,141 +1,142 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { HeaderNavbar } from './components/common/HeaderNavbar';
-import { AdminLayout } from './components/admin/AdminLayout';
-import { CustomerApp } from './components/customer/CustomerApp';
-import { EmployeeApp } from './components/employee/EmployeeApp';
-import { SplitConnectedView } from './components/split/SplitConnectedView';
-import { AdminStandaloneApp } from './apps/admin/AdminStandaloneApp';
-import { CustomerStandaloneApp } from './apps/customer/CustomerStandaloneApp';
-import { EmployeeStandaloneApp } from './apps/employee/EmployeeStandaloneApp';
+import { AdminApp } from './apps/admin';
+import { CustomerApp } from './apps/customer';
+import { EmployeeApp } from './apps/employee';
+import { SplitConnectedView } from './apps/split';
+import { PrivacyPolicyModal } from './components/legal/PrivacyPolicyModal';
+import { TermsOfServiceModal } from './components/legal/TermsOfServiceModal';
+import { AccountDeletionModal } from './components/legal/AccountDeletionModal';
+import { PlayConsoleHubModal } from './components/legal/PlayConsoleHubModal';
+import { PushNotificationToast } from './components/common/PushNotificationToast';
+import { PushNotificationSimulatorModal } from './components/common/PushNotificationSimulatorModal';
 import { SeparatedCodeViewerModal } from './components/common/SeparatedCodeViewerModal';
 import { BackendStatusModal } from './components/common/BackendStatusModal';
-import {
-  CheckCircle2,
-  Code2,
-  ExternalLink,
-  Layers,
-  Smartphone,
-  HardHat,
-  Server,
-} from 'lucide-react';
+import { PushToast } from './shared/types';
 
 const MainView: React.FC = () => {
-  const { currentRole, setCurrentRole } = useApp();
-  const [isCodeViewerOpen, setIsCodeViewerOpen] = useState(false);
-  const [isBackendStatusOpen, setIsBackendStatusOpen] = useState(false);
-  const [standaloneApp, setStandaloneApp] = useState<'admin' | 'customer' | 'employee' | null>(null);
+  const {
+    currentRole,
+    pushToasts,
+    dismissPushToast,
+    showPushSimulator,
+    setShowPushSimulator,
+    customization,
+  } = useApp();
 
-  // Check URL query param e.g. ?app=admin, ?app=customer, ?app=employee
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const appParam = params.get('app');
-      if (appParam === 'admin' || appParam === 'customer' || appParam === 'employee') {
-        setStandaloneApp(appParam);
-      } else if (appParam === 'split') {
-        setCurrentRole('split');
-      }
-    } catch (e) {
-      // ignore
-    }
-  }, [setCurrentRole]);
+  // Modals
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showDeletion, setShowDeletion] = useState(false);
+  const [showPlayConsole, setShowPlayConsole] = useState(false);
+  const [showCodeViewer, setShowCodeViewer] = useState(false);
+  const [showBackendStatus, setShowBackendStatus] = useState(false);
 
-  // If running in Standalone Mode, render the isolated standalone application
-  if (standaloneApp === 'admin') {
-    return <AdminStandaloneApp onExitStandalone={() => setStandaloneApp(null)} />;
-  }
-  if (standaloneApp === 'customer') {
-    return <CustomerStandaloneApp onExitStandalone={() => setStandaloneApp(null)} />;
-  }
-  if (standaloneApp === 'employee') {
-    return <EmployeeStandaloneApp onExitStandalone={() => setStandaloneApp(null)} />;
-  }
+  const handleToastClick = (toast: PushToast) => {
+    dismissPushToast(toast.id);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Universal Navigation Bar */}
+    <div className="min-h-screen flex flex-col bg-slate-100 text-slate-900 font-sans selection:bg-emerald-600 selection:text-white">
+      {/* Universal Navigation Bar with Multi-App Switcher & Split View */}
       <HeaderNavbar
-        onOpenCodeViewer={() => setIsCodeViewerOpen(true)}
-        onOpenBackendStatus={() => setIsBackendStatusOpen(true)}
-        onLaunchStandalone={(app) => setStandaloneApp(app)}
+        onOpenCodeViewer={() => setShowCodeViewer(true)}
+        onOpenBackendStatus={() => setShowBackendStatus(true)}
       />
 
-      {/* Main View Area */}
+      {/* Main View Area: Dynamic Multi-App Router / Split Ecosystem Simulator */}
       <main className="flex-1 flex flex-col">
-        {currentRole === 'admin' && <AdminLayout />}
+        {currentRole === 'admin' && <AdminApp />}
 
         {currentRole === 'customer' && (
-          <div className="flex-1 py-4 sm:py-8 px-2 sm:px-4 flex items-center justify-center">
-            <CustomerApp />
+          <div className="flex-1 flex items-center justify-center p-3 sm:p-6 bg-slate-900">
+            <div className="w-full max-w-sm rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl bg-slate-50">
+              <CustomerApp
+                onOpenPrivacy={() => setShowPrivacy(true)}
+                onOpenTerms={() => setShowTerms(true)}
+                onOpenDeletion={() => setShowDeletion(true)}
+              />
+            </div>
           </div>
         )}
 
         {currentRole === 'employee' && (
-          <div className="flex-1 py-4 sm:py-8 px-2 sm:px-4 flex items-center justify-center">
-            <EmployeeApp />
+          <div className="flex-1 flex items-center justify-center p-3 sm:p-6 bg-slate-900">
+            <div className="w-full max-w-sm rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl bg-slate-50">
+              <EmployeeApp
+                onOpenPrivacy={() => setShowPrivacy(true)}
+                onOpenTerms={() => setShowTerms(true)}
+                onOpenDeletion={() => setShowDeletion(true)}
+              />
+            </div>
           </div>
         )}
 
-        {currentRole === 'split' && <SplitConnectedView />}
+        {currentRole === 'split' && (
+          <SplitConnectedView
+            onOpenPrivacy={() => setShowPrivacy(true)}
+            onOpenTerms={() => setShowTerms(true)}
+            onOpenDeletion={() => setShowDeletion(true)}
+          />
+        )}
       </main>
 
-      {/* Architecture Separation & Concept Footnote */}
-      <footer className="bg-white border-t border-slate-200 py-6 px-4 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
-              MP
-            </div>
-            <div>
-              <p className="font-bold text-slate-800">
-                ManPowerLink — Temporary Manpower Marketplace UI/UX System
-              </p>
-              <p className="text-[11px] text-slate-400">
-                3 Separated Codebases &bull; Express.js Full-Stack REST Backend &bull; Admin &bull; Customer &bull; Employee
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setIsBackendStatusOpen(true)}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold transition text-[11px] border border-emerald-200"
-            >
-              <Server className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Backend REST APIs</span>
-            </button>
-
-            <button
-              onClick={() => setIsCodeViewerOpen(true)}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition text-[11px]"
-            >
-              <Code2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Inspect Separated App Code</span>
-            </button>
-
-            <button
-              onClick={() => setStandaloneApp(currentRole === 'split' ? 'admin' : currentRole)}
-              className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold transition text-[11px]"
-            >
-              <span>Launch Standalone</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-xs text-slate-500 text-center">
+        <p className="text-slate-500 text-xs font-medium">
+          &copy; 2026 {customization.appName}. All rights reserved.
+        </p>
       </footer>
 
-      {/* Separated Code Viewer Modal */}
-      <SeparatedCodeViewerModal
-        isOpen={isCodeViewerOpen}
-        onClose={() => setIsCodeViewerOpen(false)}
-        onLaunchStandalone={(app) => setStandaloneApp(app)}
+      {/* Global Heads-Up Push Notification Toast Banner */}
+      <PushNotificationToast
+        toasts={pushToasts}
+        onDismiss={dismissPushToast}
+        onToastClick={handleToastClick}
       />
 
-      {/* Backend API & Architecture Modal */}
+      {/* Push Simulator Modal */}
+      <PushNotificationSimulatorModal
+        isOpen={showPushSimulator}
+        onClose={() => setShowPushSimulator(false)}
+      />
+
+      {/* Separated Code & Architecture Modal */}
+      <SeparatedCodeViewerModal
+        isOpen={showCodeViewer}
+        onClose={() => setShowCodeViewer(false)}
+        onLaunchStandalone={() => setShowCodeViewer(false)}
+      />
+
+      {/* Backend Status Modal */}
       <BackendStatusModal
-        isOpen={isBackendStatusOpen}
-        onClose={() => setIsBackendStatusOpen(false)}
+        isOpen={showBackendStatus}
+        onClose={() => setShowBackendStatus(false)}
+      />
+
+      {/* Compliance Modals */}
+      <PrivacyPolicyModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        onOpenDataDeletion={() => setShowDeletion(true)}
+        onOpenTerms={() => setShowTerms(true)}
+      />
+      <TermsOfServiceModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
+      />
+      <AccountDeletionModal
+        isOpen={showDeletion}
+        onClose={() => setShowDeletion(false)}
+      />
+      <PlayConsoleHubModal
+        isOpen={showPlayConsole}
+        onClose={() => setShowPlayConsole(false)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
+        onOpenTerms={() => setShowTerms(true)}
+        onOpenDeletion={() => setShowDeletion(true)}
       />
     </div>
   );

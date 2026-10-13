@@ -35,7 +35,7 @@ const ENDPOINTS: EndpointDef[] = [
   { method: 'GET', path: '/api/health', description: 'Server health, uptime, MongoDB Atlas & entity counts', category: 'System' },
   { method: 'GET', path: '/api/db/info', description: 'Database schema, MongoDB Atlas cluster & collections (manpowerlink_db)', category: 'System' },
   { method: 'POST', path: '/api/db/reconnect', description: 'Test and trigger active connection to MongoDB Atlas cluster', category: 'System' },
-  { method: 'POST', path: '/api/auth/send-otp', description: 'Send simulated SMS OTP code (1234)', category: 'Auth', samplePayload: '{\n  "phone": "+91 98450 11223",\n  "role": "customer"\n}' },
+  { method: 'POST', path: '/api/auth/send-otp', description: 'Send SMS OTP verification code (1234)', category: 'Auth', samplePayload: '{\n  "phone": "+91 98450 11223",\n  "role": "customer"\n}' },
   { method: 'POST', path: '/api/auth/verify-otp', description: 'Verify OTP code and issue session token', category: 'Auth', samplePayload: '{\n  "phone": "+91 98450 11223",\n  "otp": "1234",\n  "role": "customer",\n  "name": "Kiran Transport & Co."\n}' },
   { method: 'POST', path: '/api/auth/login', description: 'Authenticate admin, customer, or worker session', category: 'Auth', samplePayload: '{\n  "role": "admin",\n  "emailOrPhone": "admin@manpowerlink.com",\n  "password": "admin123"\n}' },
   { method: 'POST', path: '/api/auth/logout', description: 'Terminate active session token', category: 'Auth' },
@@ -52,7 +52,7 @@ const ENDPOINTS: EndpointDef[] = [
   { method: 'POST', path: '/api/bids/bid-101/accept', description: 'Accept bid, deduct commission & assign worker', category: 'Bidding' },
   { method: 'GET', path: '/api/commission', description: 'Get platform commission policies (10% / ₹50)', category: 'Commission' },
   { method: 'PUT', path: '/api/commission', description: 'Update platform fee structure', category: 'Commission', samplePayload: '{\n  "type": "percentage",\n  "percentage": 12,\n  "fixedAmount": 60\n}' },
-  { method: 'POST', path: '/api/simulate-bid', description: 'Simulate incoming worker bid event', category: 'Bidding' },
+  { method: 'POST', path: '/api/simulate-bid', description: 'Trigger live worker bid event', category: 'Bidding' },
   { method: 'POST', path: '/api/reset', description: 'Restore database to initial seed data', category: 'System' },
 ];
 

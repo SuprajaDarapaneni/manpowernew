@@ -1,32 +1,81 @@
-import React from 'react';
-import { EmployeeApp } from '../../components/employee/EmployeeApp';
-import { ArrowLeft, HardHat } from 'lucide-react';
+import React, { useState } from 'react';
+import { EmployeeApp } from './EmployeeApp';
+import { ArrowLeft, Smartphone, Monitor } from 'lucide-react';
+import { PrivacyPolicyModal } from '../../components/legal/PrivacyPolicyModal';
+import { TermsOfServiceModal } from '../../components/legal/TermsOfServiceModal';
+import { AccountDeletionModal } from '../../components/legal/AccountDeletionModal';
 
-export const EmployeeStandaloneApp: React.FC<{ onExitStandalone?: () => void }> = ({ onExitStandalone }) => {
+interface Props {
+  onExitStandalone?: () => void;
+}
+
+export const EmployeeStandaloneApp: React.FC<Props> = ({ onExitStandalone }) => {
+  const [inPhoneFrame, setInPhoneFrame] = useState(true);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showDeletion, setShowDeletion] = useState(false);
+
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col font-sans">
-      {/* Standalone Brand Top Banner */}
-      <div className="bg-slate-950 text-white px-4 py-2 text-xs flex items-center justify-between border-b border-slate-800">
-        <div className="flex items-center space-x-2">
-          <HardHat className="w-4 h-4 text-amber-400" />
-          <span className="font-bold tracking-wide">
-            ManPowerLink Employee / Worker App <span className="text-slate-400 font-normal">(Standalone Worker Portal)</span>
-          </span>
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
+      {/* Top Standalone Bar */}
+      <header className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between text-xs">
+        <div className="flex items-center space-x-3">
+          {onExitStandalone && (
+            <button
+              onClick={onExitStandalone}
+              className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition font-bold"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Hub</span>
+            </button>
+          )}
+          <div>
+            <span className="font-extrabold text-white text-xs">Employee / Worker Standalone App</span>
+            <span className="ml-2 px-1.5 py-0.2 rounded bg-yellow-950 text-yellow-300 text-[10px] border border-yellow-800/60 font-mono">
+              Independent Project Package
+            </span>
+          </div>
         </div>
-        {onExitStandalone && (
-          <button
-            onClick={onExitStandalone}
-            className="flex items-center gap-1 text-slate-300 hover:text-white px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 transition"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Hub</span>
-          </button>
-        )}
-      </div>
 
-      <div className="flex-1 flex items-center justify-center p-2 sm:p-6 bg-slate-800/50">
-        <EmployeeApp />
-      </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setInPhoneFrame(!inPhoneFrame)}
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+          >
+            {inPhoneFrame ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{inPhoneFrame ? 'Full Screen' : 'Phone Frame'}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content Viewport */}
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div className={inPhoneFrame ? 'w-full max-w-md' : 'w-full max-w-2xl'}>
+          <EmployeeApp
+            onOpenPrivacy={() => setShowPrivacy(true)}
+            onOpenTerms={() => setShowTerms(true)}
+            onOpenDeletion={() => setShowDeletion(true)}
+          />
+        </div>
+      </main>
+
+      <PrivacyPolicyModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        onOpenDataDeletion={() => setShowDeletion(true)}
+        onOpenTerms={() => setShowTerms(true)}
+      />
+      <TermsOfServiceModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
+      />
+      <AccountDeletionModal
+        isOpen={showDeletion}
+        onClose={() => setShowDeletion(false)}
+      />
     </div>
   );
 };
+
+export default EmployeeStandaloneApp;

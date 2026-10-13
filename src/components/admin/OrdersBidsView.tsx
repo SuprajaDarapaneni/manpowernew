@@ -42,7 +42,7 @@ export const OrdersBidsView: React.FC = () => {
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                 selectedOrder.status === 'completed'
-                  ? 'bg-emerald-100 text-emerald-800'
+                  ? 'bg-yellow-100 text-yellow-950 border border-yellow-300'
                   : selectedOrder.status === 'assigned'
                   ? 'bg-blue-100 text-blue-800'
                   : selectedOrder.status === 'bidding'
@@ -64,7 +64,7 @@ export const OrdersBidsView: React.FC = () => {
           <select
             value={selectedOrder.id}
             onChange={(e) => setSelectedJobId(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:border-emerald-500"
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 cursor-pointer focus:outline-none focus:border-red-500"
           >
             {orders.map((o) => (
               <option key={o.id} value={o.id}>
@@ -87,7 +87,7 @@ export const OrdersBidsView: React.FC = () => {
 
             <div className="space-y-4 text-sm">
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
                   <Briefcase className="w-4 h-4" />
                 </div>
                 <div>
@@ -97,7 +97,7 @@ export const OrdersBidsView: React.FC = () => {
               </div>
 
               <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-700 flex items-center justify-center shrink-0">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
@@ -145,13 +145,14 @@ export const OrdersBidsView: React.FC = () => {
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
                     <IndianRupee className="w-4 h-4" />
                   </div>
                   <div>
                     <span className="text-xs font-semibold text-slate-400 block uppercase">Budget Range</span>
-                    <span className="font-extrabold text-emerald-700 text-base">
-                      ₹{selectedOrder.minBudget.toLocaleString()} - {selectedOrder.maxBudget.toLocaleString()}
+                    <span className="font-extrabold text-red-600 text-base">
+                      ₹{(selectedOrder.amountPerHead || selectedOrder.minBudget || 0).toLocaleString()}
+                      {selectedOrder.maxBudget ? ` - ₹${selectedOrder.maxBudget.toLocaleString()}` : ' / worker'}
                     </span>
                   </div>
                 </div>
@@ -170,21 +171,21 @@ export const OrdersBidsView: React.FC = () => {
             </div>
 
             {/* Platform Commission Projection for this job */}
-            <div className="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs space-y-1">
-              <div className="flex justify-between font-semibold text-emerald-950">
+            <div className="p-3.5 bg-yellow-50 border border-yellow-200 rounded-xl text-xs space-y-1">
+              <div className="flex justify-between font-semibold text-yellow-950">
                 <span>Platform Commission Rate:</span>
-                <span>
+                <span className="font-bold text-red-600">
                   {commission.type === 'percentage' ? `${commission.percentage}%` : `₹${commission.fixedAmount} Fixed`}
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-700">
-                Automatically deducted upon customer accepting bid & finalizing assignment.
+              <p className="text-[11px] text-yellow-800">
+                Automatically deducted from worker in-app wallet upon confirmation.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Bids Received List matching Screenshot 3 */}
+        {/* Right Column: Bids Received List */}
         <div className="lg:col-span-7 space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -195,8 +196,8 @@ export const OrdersBidsView: React.FC = () => {
                 </p>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Live Bidding Active</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse"></span>
+                <span className="font-semibold text-yellow-700">Live Bidding Active</span>
               </div>
             </div>
 
@@ -207,7 +208,7 @@ export const OrdersBidsView: React.FC = () => {
                   <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-slate-700">No Bids Placed Yet</p>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Click "Simulate Bid" at the top or switch to Employee App to place a quote!
+                    Click "Receive Bid" at the top or switch to Employee App to place a quote!
                   </p>
                 </div>
               ) : (
@@ -220,7 +221,7 @@ export const OrdersBidsView: React.FC = () => {
                       key={bid.id}
                       className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
                         isAccepted
-                          ? 'bg-emerald-50/80 border-emerald-300 ring-1 ring-emerald-200'
+                          ? 'bg-yellow-50/80 border-yellow-300 ring-1 ring-yellow-200'
                           : isDeclined
                           ? 'bg-slate-50 border-slate-200 opacity-60'
                           : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
@@ -250,7 +251,7 @@ export const OrdersBidsView: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Bid Amount & Action Buttons matching Screenshot 3 */}
+                      {/* Bid Amount & Action Buttons */}
                       <div className="flex items-center justify-between sm:justify-end space-x-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
                         <div className="text-left sm:text-right">
                           <span className="text-xs text-slate-400 block">Bid Quote</span>
@@ -260,8 +261,8 @@ export const OrdersBidsView: React.FC = () => {
                         </div>
 
                         {isAccepted ? (
-                          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-sm">
-                            <CheckCircle2 className="w-4 h-4" />
+                          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-yellow-100 text-yellow-950 border border-yellow-300 rounded-xl text-xs font-bold shadow-xs">
+                            <CheckCircle2 className="w-4 h-4 text-red-600" />
                             <span>Accepted</span>
                           </div>
                         ) : isDeclined ? (
@@ -278,7 +279,7 @@ export const OrdersBidsView: React.FC = () => {
                             </button>
                             <button
                               onClick={() => acceptBid(bid.id)}
-                              className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition"
+                              className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
                             >
                               Accept
                             </button>
@@ -296,7 +297,7 @@ export const OrdersBidsView: React.FC = () => {
               <span>
                 Workforce Quota: <strong className="text-slate-900">{assignedBids.length}</strong> / {selectedOrder.requiredWorkers} workers confirmed
               </span>
-              <span className="text-emerald-700 font-semibold">
+              <span className="text-red-600 font-bold">
                 {assignedBids.length >= selectedOrder.requiredWorkers
                   ? 'All Spots Filled ✓'
                   : `${selectedOrder.requiredWorkers - assignedBids.length} spots remaining`}

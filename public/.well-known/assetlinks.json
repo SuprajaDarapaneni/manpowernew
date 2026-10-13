@@ -1,0 +1,26 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.manpowerlink.marketplace",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7F:46:16:D4:58:3F:82:1A:63:F5:F8:72:42:04:95:63:23:4F:92:DF:D3:52:16:1D:6E:9A:8B:2A:44"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.manpowerlink.worker",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7F:46:16:D4:58:3F:82:1A:63:F5:F8:72:42:04:95:63:23:4F:92:DF:D3:52:16:1D:6E:9A:8B:2A:44"
+      ]
+    }
+  }
+]
